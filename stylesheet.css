@@ -1,0 +1,15 @@
+.output {
+	text-align: left;
+    border: 1px solid black;
+    width: 100%;
+    height: 50%;
+}
+
+.buttons {
+	text-align: center;
+    margin-top: 20px;
+}
+
+.output .container {
+	margin: 5px;
+}
