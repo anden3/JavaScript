@@ -3,14 +3,30 @@
 <head>
     <meta charset="utf-8">
     <link type="text/css" rel="stylesheet" href="stylesheet2b.css" />
-    <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
-    <script src="script2b.js"></script>
+    <!--<script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>-->
 </head>
 
 <body>
-    <canvas height="500" width="800" id="c">
-
-    </canvas>
+    <canvas height="500" width="800" id="c"></canvas>
+    <div class="buttons">
+        <div class="container">
+            <div class="buttons1">
+                <button type="button" onclick="left()">Left</button>
+                <button type="button" onclick="right()">Right</button>
+                <input type="number" id="horzSpeed" max=30 min="0" size=2 defaultValue=1 step="any" onchange="speed()" placeholder="1" />
+            </div>
+            <div class="buttons2">
+                <button type="button" onclick="up()">Up</button>
+                <button type="button" onclick="down()">Down</button>
+                <input type="number" id="vertSpeed" max=30 min="0" size=2 defaultValue=1 step="any" onchange="speed()" placeholder="1" />
+            </div>
+            <div class="buttons3">
+                <button type="button" onclick="stopMotion()">Stop</button>
+                <button type="button" onclick="resetPos()">Reset position</button>
+            </div>
+        </div>
+    </div>
+    <script src="script2b.js"></script>
 </body>
 
 </html>

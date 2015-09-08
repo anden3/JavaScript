@@ -1,15 +1,28 @@
-$(document).ready(function() {
-    var canv = document.getElementById("c");
-    var ctx = canv.getContext("2d");
+var canv = document.getElementById("c");
+var ctx = canv.getContext("2d");
 
+var horzOff = 0;
+var vertOff = 0;
+var horzSpd = 1;
+var vertSpd = 1;
+
+var movingRightNow = false;
+var movingLeftNow = false;
+var movingUpNow = false;
+var movingDownNow = false;
+
+var drawGuy = function(horzOffset, vertOffset) {
+    ctx.clearRect(0, 0, canv.width, canv.height);
     ctx.save();
 
     ctx.beginPath();
 
-    ctx.arc(420, 70, 40, 0, 2 * Math.PI);
+    //Head
+    ctx.arc(400 + horzOffset, 70 + vertOffset, 40, 0, 2 * Math.PI);
 
+    //Body
     ctx.scale(1, 2);
-    ctx.arc(420, 110, 40, 0, 2 * Math.PI);
+    ctx.arc(400 + horzOffset, 110 + vertOffset / 2, 40, 0, 2 * Math.PI);
 
     ctx.fillStyle = '#8ED6FF';
     ctx.fill();
@@ -20,23 +33,115 @@ $(document).ready(function() {
 
     ctx.beginPath();
 
-    ctx.moveTo(420, 110);
-    ctx.lineTo(420, 140);
+    //Neck
+    ctx.moveTo(400 + horzOffset, 110 + vertOffset);
+    ctx.lineTo(400 + horzOffset, 140 + vertOffset);
 
-    ctx.moveTo(455, 180);
-    ctx.lineTo(480, 240);
+    //Right arm
+    ctx.moveTo(435 + horzOffset, 180 + vertOffset);
+    ctx.lineTo(460 + horzOffset, 240 + vertOffset);
 
-    ctx.moveTo(385, 180);
-    ctx.lineTo(360, 240);
+    //Left arm
+    ctx.moveTo(365 + horzOffset, 180 + vertOffset);
+    ctx.lineTo(340 + horzOffset, 240 + vertOffset);
 
-    ctx.moveTo(440, 289);
-    ctx.lineTo(450, 400);
+    //Right leg
+    ctx.moveTo(420 + horzOffset, 289 + vertOffset);
+    ctx.lineTo(430 + horzOffset, 400 + vertOffset);
 
-    ctx.moveTo(400, 289);
-    ctx.lineTo(390, 400);
+    //Left leg
+    ctx.moveTo(380 + horzOffset, 289 + vertOffset);
+    ctx.lineTo(370 + horzOffset, 400 + vertOffset);
 
     ctx.closePath();
     ctx.lineWidth = 3;
     ctx.strokeStyle = 'black';
     ctx.stroke();
-});
+}
+
+drawGuy(0, 0);
+
+var speed = function() {
+    horzSpd = document.getElementById("horzSpeed").value;
+    vertSpd = document.getElementById("vertSpeed").value;
+}
+
+var left = function() {
+    stopMotion();
+    movingLeftNow = true;
+    window.movingLeft = setInterval("leftMove()", 1000 / 60);
+}
+
+var leftMove = function() {
+    if(horzOff >= -340) {
+        horzOff -= horzSpd;
+        drawGuy(horzOff, vertOff);
+    }
+}
+
+var right = function() {
+    stopMotion();
+    movingRightNow = true;
+    window.movingRight = setInterval("rightMove()", 1000 / 60);
+
+}
+
+var rightMove = function() {
+    if(horzOff <= 340) {
+        horzOff -= (-1 * horzSpd);
+        drawGuy(horzOff, vertOff);
+    }
+}
+
+var stopMotion = function() {
+    if(movingRightNow) {
+        clearInterval(window.movingRight);
+        movingRightNow = false;
+    }
+
+    else if(movingLeftNow) {
+        clearInterval(window.movingLeft);
+        movingLeftNow = false;
+    }
+    else if(movingUpNow) {
+        clearInterval(window.movingUp);
+        movingUpNow = false;
+    }
+    else if(movingDownNow) {
+        clearInterval(window.movingDown);
+        movingDownNow = false;
+    }
+}
+
+var resetPos = function() {
+    stopMotion();
+    horzOff = 0;
+    vertOff = 0;
+    drawGuy(0, 0);
+}
+
+var up = function() {
+    stopMotion();
+    movingUpNow = true;
+    window.movingUp = setInterval("upMove()", 1000 / 60);
+}
+
+var upMove = function() {
+    if(vertOff >= -30) {
+        vertOff -= vertSpd;
+        drawGuy(horzOff, vertOff);
+    }
+}
+
+var down = function() {
+    stopMotion();
+    movingDownNow = true;
+    window.movingDown = setInterval("downMove()", 1000 / 60);
+}
+
+var downMove = function() {
+    if(vertOff <= 100) {
+        vertOff -= (-1 * vertSpd);
+        drawGuy(horzOff, vertOff);
+    }
+}
