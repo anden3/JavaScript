@@ -1,11 +1,13 @@
 var canv = document.getElementById("c");
 var ctx = canv.getContext("2d");
 
+//Defining and setting default offsets and speeds
 var horzOff = 0;
 var vertOff = 0;
 var horzSpd = 1;
 var vertSpd = 1;
 
+//Defining 'currently moving' booleans
 var movingRightNow = false;
 var movingLeftNow = false;
 var movingUpNow = false;
@@ -62,6 +64,7 @@ var drawGuy = function(horzOffset, vertOffset) {
 drawGuy(0, 0);
 
 var speed = function() {
+    //Saving values from form fields into variables
     horzSpd = document.getElementById("horzSpeed").value;
     vertSpd = document.getElementById("vertSpeed").value;
 }
@@ -94,6 +97,7 @@ var rightMove = function() {
 }
 
 var stopMotion = function() {
+    //Stopping intervals depending on what one is active
     if(movingRightNow) {
         clearInterval(window.movingRight);
         movingRightNow = false;
@@ -114,6 +118,7 @@ var stopMotion = function() {
 }
 
 var resetPos = function() {
+    //Halting motion and resets guy to default position
     stopMotion();
     horzOff = 0;
     vertOff = 0;
