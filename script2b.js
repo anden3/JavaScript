@@ -91,7 +91,7 @@ var right = function() {
 
 var rightMove = function() {
     if(horzOff <= 340) {
-        horzOff -= (-1 * horzSpd);
+        horzOff -= -horzSpd;
         drawGuy(horzOff, vertOff);
     }
 }
@@ -146,7 +146,7 @@ var down = function() {
 
 var downMove = function() {
     if(vertOff <= 100) {
-        vertOff -= (-1 * vertSpd);
+        vertOff -= -vertSpd;
         drawGuy(horzOff, vertOff);
     }
 }

@@ -4,6 +4,11 @@
     <meta charset="utf-8">
     <link type="text/css" rel="stylesheet" href="stylesheet2b.css" />
     <!--<script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>-->
+
+    <!--Google Material Design Lite-->
+    <link rel="stylesheet" href="https://storage.googleapis.com/code.getmdl.io/1.0.4/material.indigo-pink.min.css">
+    <script src="https://storage.googleapis.com/code.getmdl.io/1.0.4/material.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 </head>
 
 <body>
@@ -11,18 +16,30 @@
     <div class="buttons">
         <div class="container">
             <div class="buttons1">
-                <button type="button" onclick="left()">Left</button>
-                <button type="button" onclick="right()">Right</button>
-                <input type="number" id="horzSpeed" size=2 defaultValue=1 step="any" onchange="speed()" placeholder="1" />
+                <button type="button" class="mdl-button mdl-js-button mdl-js-ripple-effect" onclick="left()">Left</button>
+                <button type="button" class="mdl-button mdl-js-button mdl-js-ripple-effect" onclick="right()">Right</button>
+                <form action="#">
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                        <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="horzSpeed" onchange="speed()" defaultValue=1 />
+                        <label class="mdl-textfield__label" for="sample4">Speed...</label>
+                        <span class="mdl-textfield__error">Input is not a number!</span>
+                    </div>
+                </form>
             </div>
             <div class="buttons2">
-                <button type="button" onclick="up()">Up</button>
-                <button type="button" onclick="down()">Down</button>
-                <input type="number" id="vertSpeed" size=2 defaultValue=1 step="any" onchange="speed()" placeholder="1" />
+                <button type="button" class="mdl-button mdl-js-button mdl-js-ripple-effect" onclick="up()">Up</button>
+                <button type="button" class="mdl-button mdl-js-button mdl-js-ripple-effect" onclick="down()">Down</button>
+                <form action="#">
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                        <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="vertSpeed" onchange="speed()" defaultValue=1 />
+                        <label class="mdl-textfield__label" for="sample4">Speed...</label>
+                        <span class="mdl-textfield__error">Input is not a number!</span>
+                    </div>
+                </form>
             </div>
             <div class="buttons3">
-                <button type="button" onclick="stopMotion()">Stop</button>
-                <button type="button" onclick="resetPos()">Reset position</button>
+                <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary" onclick="stopMotion()">Stop</button>
+                <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" onclick="resetPos()">Reset position</button>
             </div>
         </div>
     </div>
