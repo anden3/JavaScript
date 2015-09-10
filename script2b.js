@@ -15,17 +15,16 @@ var movingDownNow = false;
 
 var drawGuy = function(horzOffset, vertOffset) {
     ctx.clearRect(0, 0, canv.width, canv.height);
-    ctx.translate(canv.width / 2, canv.height / 2);
     ctx.save();
 
     ctx.beginPath();
 
     //Head
-    ctx.arc(400 + horzOffset, 70 + vertOffset, 40, 0, 2 * Math.PI);
+    ctx.arc(400 + horzOffset, 70 + vertOffset, 20, 0, 2 * Math.PI);
 
     //Body
     ctx.scale(1, 2);
-    ctx.arc(400 + horzOffset, 110 + vertOffset / 2, 40, 0, 2 * Math.PI);
+    ctx.arc(400 + horzOffset, 72.5 + (vertOffset / 2), 20, 0, 2 * Math.PI);
 
     ctx.fillStyle = '#8ED6FF';
     ctx.fill();
@@ -37,24 +36,24 @@ var drawGuy = function(horzOffset, vertOffset) {
     ctx.beginPath();
 
     //Neck
-    ctx.moveTo(400 + horzOffset, 110 + vertOffset);
-    ctx.lineTo(400 + horzOffset, 140 + vertOffset);
+    ctx.moveTo(400 + horzOffset, 90 + vertOffset);
+    ctx.lineTo(400 + horzOffset, 105 + vertOffset);
 
     //Right arm
-    ctx.moveTo(435 + horzOffset, 180 + vertOffset);
-    ctx.lineTo(460 + horzOffset, 240 + vertOffset);
+    ctx.moveTo(417.5 + horzOffset, 120 + vertOffset);
+    ctx.lineTo(430 + horzOffset, 150 + vertOffset);
 
     //Left arm
-    ctx.moveTo(365 + horzOffset, 180 + vertOffset);
-    ctx.lineTo(340 + horzOffset, 240 + vertOffset);
+    ctx.moveTo(382.5 + horzOffset, 120 + vertOffset);
+    ctx.lineTo(370 + horzOffset, 150 + vertOffset);
 
     //Right leg
-    ctx.moveTo(420 + horzOffset, 289 + vertOffset);
-    ctx.lineTo(430 + horzOffset, 400 + vertOffset);
+    ctx.moveTo(410 + horzOffset, 180 + vertOffset);
+    ctx.lineTo(415 + horzOffset, 235 + vertOffset);
 
     //Left leg
-    ctx.moveTo(380 + horzOffset, 289 + vertOffset);
-    ctx.lineTo(370 + horzOffset, 400 + vertOffset);
+    ctx.moveTo(390 + horzOffset, 180 + vertOffset);
+    ctx.lineTo(385 + horzOffset, 235 + vertOffset);
 
     ctx.closePath();
     ctx.lineWidth = 3;
@@ -77,7 +76,7 @@ var left = function() {
 }
 
 var leftMove = function() {
-    if(horzOff >= -340) {
+    if(horzOff > -370) {
         horzOff -= horzSpd;
         drawGuy(horzOff, vertOff);
     }
@@ -91,7 +90,7 @@ var right = function() {
 }
 
 var rightMove = function() {
-    if(horzOff <= 340) {
+    if(horzOff < 370) {
         horzOff -= -horzSpd;
         drawGuy(horzOff, vertOff);
     }
@@ -133,7 +132,7 @@ var up = function() {
 }
 
 var upMove = function() {
-    if(vertOff >= -30) {
+    if(vertOff > -50) {
         vertOff -= vertSpd;
         drawGuy(horzOff, vertOff);
     }
@@ -146,7 +145,7 @@ var down = function() {
 }
 
 var downMove = function() {
-    if(vertOff <= 100) {
+    if(vertOff < 265) {
         vertOff -= -vertSpd;
         drawGuy(horzOff, vertOff);
     }
