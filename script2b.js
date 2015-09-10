@@ -15,6 +15,7 @@ var movingDownNow = false;
 
 var drawGuy = function(horzOffset, vertOffset) {
     ctx.clearRect(0, 0, canv.width, canv.height);
+    ctx.translate(canv.width / 2, canv.height / 2);
     ctx.save();
 
     ctx.beginPath();

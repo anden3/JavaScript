@@ -5,4 +5,9 @@
 .buttons .container div {
     display: block;
     margin-top: 10px;
+    margin-left: 10px;
+}
+
+canvas {
+    margin: 5px 0 0 5px;
 }
