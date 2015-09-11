@@ -19,17 +19,29 @@ var paintBall = function() {
     ballX += ballVX;
     ballY += ballVY;
 
-    //Höger- och vänsterkant
+    //Right and left edge
     if(ballX >= 795 || ballX <= 5) {
         ballVX *= -1;
     }
-    //Botten- och toppkant
+    //Bottom and top edge
     if(ballY >= 595 || ballY <= 5) {
         ballVY *= -1;
     }
-
+    //Paddle collision detection
     if(Math.abs(ballX - 20) === 10 && Math.abs(ballY - (p1Y + 50) <= 50)) {
         ballVX *= -1;
+        if(ballVX > 0) {
+            ballVX += 0.4;
+        }
+        else {
+            ballVX -= 0.4;
+        }
+        if(ballVY > 0) {
+            ballVY += 0.2;
+        }
+        else {
+            ballVY -= 0.2;
+        }
     }
 }
 
@@ -39,7 +51,7 @@ var paintRect = function() {
 }
 
 var update = function() {
-    ctx.clearRect(0, 0, 800, 600);
+    //ctx.clearRect(0, 0, 800, 600);
     paintRect();
     paintBall();
 }
@@ -50,7 +62,7 @@ var keyDown = function(e) {
             p1VY = 0;
         }
         else {
-            p1VY = -2;
+            p1VY = -5;
         }
     }
     if(e.keyCode === 83 || e.keyCode === 40) {
@@ -58,7 +70,7 @@ var keyDown = function(e) {
             p1VY = 0;
         }
         else {
-            p1VY = 2;
+            p1VY = 5;
         }
     }
 }
