@@ -13,6 +13,11 @@ var p2Y = 0;
 //Initial score
 var p1S = 0, p2S = 0;
 
+//Saving sounds to variables
+var soundWall = new Audio("http://cs.au.dk/~dsound/DigitalAudio.dir/Greenfoot/Pong.dir/sounds_ping_pong_8bit/ping_pong_8bit_plop.wav");
+var soundPaddle = new Audio("http://cs.au.dk/~dsound/DigitalAudio.dir/Greenfoot/Pong.dir/sounds_ping_pong_8bit/ping_pong_8bit_beeep.wav");
+var soundMiss = new Audio("http://cs.au.dk/~dsound/DigitalAudio.dir/Greenfoot/Pong.dir/sounds_ping_pong_8bit/ping_pong_8bit_peeeeeep.wav");
+
 var paintBall = function() {
     //Drawing the ball
     ctx.beginPath();
@@ -28,23 +33,28 @@ var paintBall = function() {
     //Right edge col-detection
     if(ballX >= 795) {
         p1S += 1;
+        soundMiss.play();
         resetBall();
     }
     //Left edge col-detection
     if(ballX <= 5) {
         p2S += 1;
+        soundMiss.play();
         resetBall();
     }
     //Bottom and top edge col-detection
     if(ballY >= 595 || ballY <= 5) {
+        soundWall.play();
         ballVY *= -1;
     }
     //Paddle 1 col-detection
     if(Math.abs(ballX - 20) <= 10 && Math.abs(ballY - (p1Y + 50)) <= 50) {
+        soundPaddle.play();
         ballVX *= -1;
     }
     //Paddle 2 col-detection
     if(Math.abs(ballX - 780) <= 10 && Math.abs(ballY - (p2Y + 50)) <= 50) {
+        soundPaddle.play();
         ballVX *= -1;
     }
 }
