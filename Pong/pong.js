@@ -5,6 +5,7 @@ var ballX = 300, ballY = 350;
 var ballVX = 2, ballVY = 1;
 
 var p1Y = 300, p1VY = 0;
+var p2Y = 0;
 
 var paintBall = function() {
     ctx.beginPath();
@@ -28,30 +29,22 @@ var paintBall = function() {
         ballVY *= -1;
     }
     //Paddle collision detection
-    if(Math.abs(ballX - 20) === 10 && Math.abs(ballY - (p1Y + 50) <= 50)) {
+    if(Math.abs(ballX - 20) <= 10 && Math.abs(ballY - (p1Y + 50) <= 50)) {
         ballVX *= -1;
-        if(ballVX > 0) {
-            ballVX += 0.4;
-        }
-        else {
-            ballVX -= 0.4;
-        }
-        if(ballVY > 0) {
-            ballVY += 0.2;
-        }
-        else {
-            ballVY -= 0.2;
-        }
+    }
+    if(Math.abs(ballX - 780) <= 10 && Math.abs(ballY - (p2Y + 50) <= 50)) {
+        ballVX *= -1;
     }
 }
 
 var paintRect = function() {
     ctx.fillRect(15, p1Y, 10, 100);
+    ctx.fillRect(775, p2Y, 10, 100);
     p1Y += p1VY;
 }
 
 var update = function() {
-    //ctx.clearRect(0, 0, 800, 600);
+    ctx.clearRect(0, 0, 800, 600);
     paintRect();
     paintBall();
 }
@@ -79,6 +72,10 @@ var keyUp = function(e) {
     if(e.keyCode === 87 || e.keyCode === 83 || e.keyCode === 38 || e.keyCode === 40) {
         p1VY = 0;
     }
+}
+
+var mouseMove = function(e) {
+    p2Y = e.clientY - 50;
 }
 
 window.setInterval(update, 1000 / 60);
