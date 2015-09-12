@@ -1,28 +1,33 @@
 var canvas = document.getElementById("canv");
 var ctx = canvas.getContext("2d");
 
-var ballX = 300, ballY = 350;
+var ballX = 395, ballY = 295;
 var ballVX = 2, ballVY = 1;
 
 var p1Y = 300, p1VY = 0;
 var p2Y = 0;
 
+var p1S = 0, p2S = 0;
+
 var paintBall = function() {
     ctx.beginPath();
     ctx.arc(ballX, ballY, 5, 0, 2 * Math.PI);
-    ctx.fillStyle = "rgba(255, 0, 150, 0.9)";
+    ctx.fillStyle = "#FFFFFF";
     ctx.fill();
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = "#B2B200";
-    ctx.stroke();
     ctx.closePath();
 
     ballX += ballVX;
     ballY += ballVY;
 
-    //Right and left edge
-    if(ballX >= 795 || ballX <= 5) {
-        ballVX *= -1;
+    //Right edge
+    if(ballX >= 795) {
+        p1S += 1;
+        resetBall();
+    }
+    //Left edge
+    if(ballX <= 5) {
+        p2S += 1;
+        resetBall();
     }
     //Bottom and top edge
     if(ballY >= 595 || ballY <= 5) {
@@ -43,10 +48,26 @@ var paintRect = function() {
     p1Y += p1VY;
 }
 
+var paintText = function() {
+    ctx.font = "100px monospace";
+    ctx.fillText(p1S, 300, 100);
+    ctx.fillText(":", 370, 90);
+    ctx.fillText(p2S, 440, 100);
+}
+
 var update = function() {
     ctx.clearRect(0, 0, 800, 600);
     paintRect();
     paintBall();
+    paintText();
+}
+
+var resetBall = function() {
+    ballX = 395;
+    ballY = 295;
+    ballVX = Math.floor(Math.random() * (2 + 2 + 1) - 2);
+    ballVY = Math.floor(Math.random() * (2 + 2 + 1) - 2);
+    update();
 }
 
 var keyDown = function(e) {
