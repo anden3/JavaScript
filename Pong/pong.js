@@ -53,7 +53,7 @@ var paintBall = function() {
         ballVX *= -1;
     }
     //Paddle 2 col-detection
-    if(Math.abs(ballX - canvas.width - 20) <= 10 && Math.abs(ballY - (p2Y + 50)) <= 50) {
+    if(Math.abs(ballX - (canvas.width - 20)) <= 10 && Math.abs(ballY - (p2Y + 50)) <= 50) {
         soundPaddle.play();
         ballVX *= -1;
     }
@@ -62,7 +62,7 @@ var paintBall = function() {
 var paintRect = function() {
     //Drawing the paddles
     ctx.fillRect(15, p1Y, 10, 100);
-    ctx.fillRect(canvas.width - 15, p2Y, 10, 100);
+    ctx.fillRect(canvas.width - 25, p2Y, 10, 100);
 
     //Moving the left paddle
     p1Y += p1VY;
@@ -149,6 +149,8 @@ var mouseMove = function(e) {
     p2Y = e.clientY - 50;
 }
 
+//Setting the initial position and speed of the ball
 resetBall();
+
 //Calls the update function sixty times per second
 window.setInterval(update, 1000 / 60);
