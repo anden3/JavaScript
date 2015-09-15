@@ -2,12 +2,12 @@
 var canvas = document.getElementById("canv");
 var ctx = canvas.getContext("2d");
 
-//Initial position and speed of ball
-var ballX = 395, ballY = 295;
-var ballVX = 2, ballVY = 1;
+//Defining variables for position and speed of ball
+var ballX = 0, ballY = 0;
+var ballVX = 0, ballVY = 0;
 
 //Y-values and speed for paddles
-var p1Y = 300, p1VY = 0;
+var p1Y = canvas.height / 2 - 50, p1VY = 0;
 var p2Y = 0;
 
 //Initial score
@@ -31,7 +31,7 @@ var paintBall = function() {
     ballY += ballVY;
 
     //Right edge col-detection
-    if(ballX >= 795) {
+    if(ballX >= canvas.width - 5) {
         p1S += 1;
         soundMiss.play();
         resetBall();
@@ -43,7 +43,7 @@ var paintBall = function() {
         resetBall();
     }
     //Bottom and top edge col-detection
-    if(ballY >= 595 || ballY <= 5) {
+    if(ballY >= canvas.height - 5 || ballY <= 5) {
         soundWall.play();
         ballVY *= -1;
     }
@@ -53,7 +53,7 @@ var paintBall = function() {
         ballVX *= -1;
     }
     //Paddle 2 col-detection
-    if(Math.abs(ballX - 780) <= 10 && Math.abs(ballY - (p2Y + 50)) <= 50) {
+    if(Math.abs(ballX - canvas.width - 20) <= 10 && Math.abs(ballY - (p2Y + 50)) <= 50) {
         soundPaddle.play();
         ballVX *= -1;
     }
@@ -62,19 +62,21 @@ var paintBall = function() {
 var paintRect = function() {
     //Drawing the paddles
     ctx.fillRect(15, p1Y, 10, 100);
-    ctx.fillRect(775, p2Y, 10, 100);
+    ctx.fillRect(canvas.width - 15, p2Y, 10, 100);
 
     //Moving the left paddle
     p1Y += p1VY;
 
-    //Drawing the dashed center line
+    //Drawing the center line
     ctx.beginPath();
+        //Setting the style of the line
         ctx.strokeStyle = "#FFFFFF";
         ctx.lineWidth = 20;
         ctx.setLineDash([21]);
 
-        ctx.moveTo(400, -3);
-        ctx.lineTo(400, 600);
+        //Drawing the line
+        ctx.moveTo(canvas.width / 2, -3);
+        ctx.lineTo(canvas.width / 2, canvas.height);
         ctx.stroke();
     ctx.closePath();
 }
@@ -82,13 +84,13 @@ var paintRect = function() {
 var paintText = function() {
     //Drawing the score displays
     ctx.font = "100px monospace";
-    ctx.fillText(p1S, 300, 100);
-    ctx.fillText(p2S, 440, 100);
+    ctx.fillText(p1S, canvas.width / 2 - 100, canvas.height / 6);
+    ctx.fillText(p2S, canvas.width / 2 + 40, canvas.height / 6);
 }
 
 var update = function() {
     //Clearing the canvas
-    ctx.clearRect(0, 0, 800, 600);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     //Calling all drawing functions
     paintRect();
@@ -98,12 +100,15 @@ var update = function() {
 
 var resetBall = function() {
     //Setting ball spawn location to the center of the canvas
-    ballX = 395;
-    ballY = 295;
+    ballX = canvas.width / 2 - 5;
+    ballY = canvas.height / 2 - 5;
 
-    //Setting ball speeds to random values between -2 and 2
-    ballVX = Math.random() * (2 + 2 + 1) - 2;
-    ballVY = Math.random() * (2 + 2 + 1) - 2;
+    //Saving a value of either -1 or 1 to a variable
+    var posOrNeg = Math.random() < 0.5 ? -1 : 1;
+
+    //Setting ball speeds to random values between 1 and 5, and multiplies it by either 1 or -1
+    ballVX = posOrNeg * (Math.random() * (5 - 1 + 1) + 1);
+    ballVY = posOrNeg * (Math.random() * (5 - 1 + 1) + 1);
     update();
 }
 
@@ -122,7 +127,7 @@ var keyDown = function(e) {
     //Checking if 'S' or 'DownArrow' is being pressed
     if(e.keyCode === 83 || e.keyCode === 40) {
         //Only moves the paddle if it's not at the bottom already
-        if(p1Y >= 500) {
+        if(p1Y >= canvas.height - 100) {
             p1VY = 0;
         }
         else {
@@ -144,5 +149,6 @@ var mouseMove = function(e) {
     p2Y = e.clientY - 50;
 }
 
+resetBall();
 //Calls the update function sixty times per second
 window.setInterval(update, 1000 / 60);
