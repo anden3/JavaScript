@@ -163,7 +163,7 @@ var keyDown = function(e) {
 
 var keyUp = function(e) {
     //Checking if one of the movement keys have been released, and if so, stops the paddle.
-    if(e.keyCode === 87 || e.keyCode === 83 || e.keyCode === 38 || e.keyCode === 40) {
+    if(e.keyCode === 87 || e.keyCode === 83 || e.keyCode === 38 || e.keyCode === 40) {
         p1VY = 0;
     }
 }
