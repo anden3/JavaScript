@@ -11,109 +11,206 @@ var dimX = ctx.canvas.width, dimY = ctx.canvas.height;
 
 //Adding event handlers for the keys
 document.getElementById("main").addEventListener("keydown", function(){ keyDown(event); });
-//document.getElementById("main").addEventListener("keyup", function(){ keyUp(event); });
 
-//Returns random values X and Y-values
+//Returns random X and Y-values
 var randPos = function(axis) {
     return (Math.floor(Math.random() * ((axis - 5) - 5 + 1) + 5));
 }
 
+//Returns random hex color
+var randColor = function() {
+    return '#' + Math.floor(Math.random() * 16777215).toString(16)
+}
+
 //Adding starting dimensions for the players
-var p1X = randPos(dimX), p1Y = randPos(dimY);
-var p2X = randPos(dimX), p2Y = randPos(dimY);
+var p1X = 0, p1Y = 0;
+var p2X = 0, p2Y = 0;
+
+//Adding arrays for storing line areas
+var p1P = [[], []], p2P = [[], []];
 
 //Adding speeds for the players
-var p1VX = 0.5, p1VY = 0.5;
+var p1VX = 1, p1VY = 0;
 var p2VX = 1, p2VY = 0;
 
-//Adding rotations for the players
-var p1R = 0, p2R = 0;
-
-var currentRot = 0, currentRot = 0;
-
 //Adding colors for the players
-var p1C = ctx.fillStyle = '#' + Math.floor(Math.random() * 16777215).toString(16), p2C = ctx.fillStyle = '#' + Math.floor(Math.random() * 16777215).toString(16);
+var p1C = "", p2C = "";
 
 //Adding scores for the players
 var p1S = 0, p2S = 0;
 
-var paintP1 = function() {
-    if(p1R > 0) {
-        currentRot += 3;
+//Drawing the score
+var drawScore = function() {
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.strokeText("Player 1: " + p1S, 20, 30);
+    ctx.strokeText("Player 2: " + p2S, 20, 50);
+}
 
-        ctx.translate(p1X, p1Y);
-        ctx.rotate(3 * Math.PI / 180);
-
-        ctx.arc(0, 0, 5, 0, Math.PI * 2);
-
-        ctx.strokeStyle = p1C;
-        ctx.stroke();
-
-        ctx.translate(-p1X, -p1Y);
-
-        p1R -= 1;
-
-        p1X += p1VX;
-        p1Y += p1VY;
-    }
-    else if(p1R < 0) {
-        currentRot -= 3;
-
-        ctx.translate(p1X, p1Y);
-        ctx.rotate(-3 * Math.PI / 180);
-
-        ctx.arc(0, 0, 5, 0, Math.PI * 2);
-
-        ctx.strokeStyle = p1C;
-        ctx.stroke();
-
-        ctx.translate(-p1X, -p1Y);
-
-        p1R += 1;
-
-        p1X += p1VX;
-        p1Y += p1VY;
-    }
-    else {
+var paintPlayers = function() {
+    //Drawing player 1
+    ctx.beginPath();
         ctx.arc(p1X, p1Y, 5, 0, Math.PI * 2);
 
         ctx.strokeStyle = p1C;
         ctx.stroke();
+    ctx.closePath();
 
-        p1X += p1VX;
-        p1Y += p1VY;
-    }
-}
+    //Drawing player 2
+    ctx.beginPath();
+        ctx.arc(p2X, p2Y, 5, 0, Math.PI * 2);
 
-var paintP2 = function() {
-    ctx.save();
-    ctx.rotate((-1 * currentRot) * Math.PI / 180);
+        ctx.strokeStyle = p2C;
+        ctx.stroke();
+    ctx.closePath();
 
-    ctx.arc(p2X, p2Y, 5, 0, Math.PI * 2);
+    //Adding player 1 coords to array
+    p1P[0].push(p1X);
+    p1P[1].push(p1Y);
 
-    ctx.fillStyle = p2C;
-    ctx.fill();
+    //Moving player 1
+    p1X += p1VX;
+    p1Y += p1VY;
 
-    ctx.restore();
+    //Adding player 2 coords to array
+    p2P[0].push(p2X);
+    p2P[1].push(p2Y);
 
+    //Moving player 2
     p2X += p2VX;
     p2Y += p2VY;
 }
 
+var reset = function() {
+    //Clearing up from last game
+    ctx.clearRect(0, 0, dimX, dimY);
+
+    //Drawing the score
+    drawScore();
+
+    //Adding starting dimensions for the players
+    p1X = randPos(dimX), p1Y = randPos(dimY);
+    p2X = randPos(dimX), p2Y = randPos(dimY);
+
+    //Adding arrays for storing line areas
+    p1P = [[p1X], [p1Y]], p2P = [[p2X], [p2Y]];
+
+    //Adding colors for the players
+    p1C = randColor(), p2C = randColor();
+}
+
+//Checking for collisions
+var colDetection = function() {
+    for(var i = 0; i < p1P[0].length; i++) {
+        if(p1P[0][i] === p2X && p1P[1][i] === p2Y) {
+            p1S += 1;
+            reset();
+        }
+        if(p2P[0][i] === p1X && p2P[1][i] === p1Y) {
+            p2S += 1;
+            reset();
+        }
+        if(p1P[0][i] === p1X && p1P[1][i] === p1Y) {
+            p2S += 1;
+            reset();
+        }
+        if(p2P[0][i] === p2X && p2P[1][i] === p2Y) {
+            p1S += 1;
+            reset();
+        }
+    }
+    if(p1X >= dimX - 4 || p1X <= 4 || p1Y >= dimY - 4 || p1Y <= 4) {
+        p2S += 1;
+        reset();
+    }
+    if(p2X >= dimX - 4 || p2X <= 4 || p2Y >= dimY - 4 || p2Y <= 4) {
+        p1S += 1;
+        reset();
+    }
+}
+
+//Updating the canvas
 var update = function() {
-    paintP1();
-    paintP2();
+    paintPlayers();
+    colDetection();
 }
 
 var keyDown = function(e) {
-    console.log(e.keyCode);
     if(e.keyCode === 65) {
-        p1R = 5;
+        if(p1VX === 1 && p1VY === 0) {
+            p1VX = 0;
+            p1VY = -1;
+        }
+        else if(p1VX === 0 && p1VY === 1) {
+            p1VX = 1;
+            p1VY = 0;
+        }
+        else if(p1VX === -1 && p1VY === 0) {
+            p1VX = 0;
+            p1VY = 1;
+        }
+        else if(p1VX === 0 && p1VY === -1) {
+            p1VX = -1;
+            p1VY = 0;
+        }
     }
     else if(e.keyCode === 68) {
-        p1R = -5;
+        if(p1VX === 1 && p1VY === 0) {
+            p1VX = 0;
+            p1VY = 1;
+        }
+        else if(p1VX === 0 && p1VY === 1) {
+            p1VX = -1;
+            p1VY = 0;
+        }
+        else if(p1VX === -1 && p1VY === 0) {
+            p1VX = 0;
+            p1VY = -1;
+        }
+        else if(p1VX === 0 && p1VY === -1) {
+            p1VX = 1;
+            p1VY = 0;
+        }
+    }
+
+    if(e.keyCode === 37) {
+        if(p2VX === 1 && p2VY === 0) {
+            p2VX = 0;
+            p2VY = -1;
+        }
+        else if(p2VX === 0 && p2VY === 1) {
+            p2VX = 1;
+            p2VY = 0;
+        }
+        else if(p2VX === -1 && p2VY === 0) {
+            p2VX = 0;
+            p2VY = 1;
+        }
+        else if(p2VX === 0 && p2VY === -1) {
+            p2VX = -1;
+            p2VY = 0;
+        }
+    }
+    else if(e.keyCode === 39) {
+        if(p2VX === 1 && p2VY === 0) {
+            p2VX = 0;
+            p2VY = 1;
+        }
+        else if(p2VX === 0 && p2VY === 1) {
+            p2VX = -1;
+            p2VY = 0;
+        }
+        else if(p2VX === -1 && p2VY === 0) {
+            p2VX = 0;
+            p2VY = -1;
+        }
+        else if(p2VX === 0 && p2VY === -1) {
+            p2VX = 1;
+            p2VY = 0;
+        }
     }
 }
+
+reset();
 
 //Calls the update function sixty times per second
 window.setInterval(update, 50 / 3);
