@@ -113,7 +113,7 @@ var update = function() {
 }
 
 var updateDimensions = function() {
-    //Setting the canvas dimensions to the maximum avaliable size within the window
+    //Setting the canvas dimensions to the maximum available size within the window
     ctx.canvas.width = window.innerWidth;
     ctx.canvas.height = window.innerHeight;
 
