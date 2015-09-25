@@ -26,52 +26,92 @@ var p2X = randPos(dimX), p2Y = randPos(dimY);
 var p1VX = 0.5, p1VY = 0.5;
 var p2VX = 1, p2VY = 0;
 
+//Adding rotations for the players
+var p1R = 0, p2R = 0;
+
+var currentRot = 0, currentRot = 0;
+
 //Adding colors for the players
 var p1C = ctx.fillStyle = '#' + Math.floor(Math.random() * 16777215).toString(16), p2C = ctx.fillStyle = '#' + Math.floor(Math.random() * 16777215).toString(16);
 
 //Adding scores for the players
 var p1S = 0, p2S = 0;
 
-var paintPlayers = function() {
-    ctx.beginPath();
+var paintP1 = function() {
+    if(p1R > 0) {
+        currentRot += 3;
+
+        ctx.translate(p1X, p1Y);
+        ctx.rotate(3 * Math.PI / 180);
+
+        ctx.arc(0, 0, 5, 0, Math.PI * 2);
+
+        ctx.strokeStyle = p1C;
+        ctx.stroke();
+
+        ctx.translate(-p1X, -p1Y);
+
+        p1R -= 1;
+
+        p1X += p1VX;
+        p1Y += p1VY;
+    }
+    else if(p1R < 0) {
+        currentRot -= 3;
+
+        ctx.translate(p1X, p1Y);
+        ctx.rotate(-3 * Math.PI / 180);
+
+        ctx.arc(0, 0, 5, 0, Math.PI * 2);
+
+        ctx.strokeStyle = p1C;
+        ctx.stroke();
+
+        ctx.translate(-p1X, -p1Y);
+
+        p1R += 1;
+
+        p1X += p1VX;
+        p1Y += p1VY;
+    }
+    else {
         ctx.arc(p1X, p1Y, 5, 0, Math.PI * 2);
-        ctx.fillStyle = p1C;
-        ctx.fill();
-    ctx.closePath();
 
-    ctx.beginPath();
-        ctx.arc(p2X, p2Y, 5, 0, Math.PI * 2);
-        ctx.fillStyle = p2C;
-        ctx.fill();
-    ctx.closePath();
+        ctx.strokeStyle = p1C;
+        ctx.stroke();
 
-    p1X += p1VX;
-    p1Y += p1VY;
+        p1X += p1VX;
+        p1Y += p1VY;
+    }
+}
+
+var paintP2 = function() {
+    ctx.save();
+    ctx.rotate((-1 * currentRot) * Math.PI / 180);
+
+    ctx.arc(p2X, p2Y, 5, 0, Math.PI * 2);
+
+    ctx.fillStyle = p2C;
+    ctx.fill();
+
+    ctx.restore();
 
     p2X += p2VX;
     p2Y += p2VY;
 }
 
 var update = function() {
-    paintPlayers();
+    paintP1();
+    paintP2();
 }
 
 var keyDown = function(e) {
-    //console.log(e.keyCode);
-    console.log(p1VX + " and " + p1VY);
-    //p1 left lowerright
-    if(p1VX < 1) {
-        p1VX -= 0.1;
+    console.log(e.keyCode);
+    if(e.keyCode === 65) {
+        p1R = 5;
     }
-    else {
-        p1VX += 0.1;
-    }
-
-    if(p1VY < 1) {
-        p1VY -= 0.1;
-    }
-    else {
-        p1VY += 0.1;
+    else if(e.keyCode === 68) {
+        p1R = -5;
     }
 }
 
