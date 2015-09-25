@@ -46,11 +46,13 @@ var drawScore = function() {
     ctx.strokeText("Player 2: " + p2S, 20, 50);
 }
 
+//Drawing the players
 var paintPlayers = function() {
     //Drawing player 1
     ctx.beginPath();
         ctx.arc(p1X, p1Y, 5, 0, Math.PI * 2);
 
+        //Setting the color to a random one
         ctx.strokeStyle = p1C;
         ctx.stroke();
     ctx.closePath();
@@ -59,6 +61,7 @@ var paintPlayers = function() {
     ctx.beginPath();
         ctx.arc(p2X, p2Y, 5, 0, Math.PI * 2);
 
+        //Setting the color to a random one
         ctx.strokeStyle = p2C;
         ctx.stroke();
     ctx.closePath();
@@ -101,27 +104,33 @@ var reset = function() {
 //Checking for collisions
 var colDetection = function() {
     for(var i = 0; i < p1P[0].length; i++) {
+        //Player 2 into player 1
         if(p1P[0][i] === p2X && p1P[1][i] === p2Y) {
             p1S += 1;
             reset();
         }
+        //Player 1 into player 2
         if(p2P[0][i] === p1X && p2P[1][i] === p1Y) {
             p2S += 1;
             reset();
         }
+        //Player 1 into self
         if(p1P[0][i] === p1X && p1P[1][i] === p1Y) {
             p2S += 1;
             reset();
         }
+        //Player 2 into self
         if(p2P[0][i] === p2X && p2P[1][i] === p2Y) {
             p1S += 1;
             reset();
         }
     }
+    //Player 1 into wall
     if(p1X >= dimX - 4 || p1X <= 4 || p1Y >= dimY - 4 || p1Y <= 4) {
         p2S += 1;
         reset();
     }
+    //Player 2 into wall
     if(p2X >= dimX - 4 || p2X <= 4 || p2Y >= dimY - 4 || p2Y <= 4) {
         p1S += 1;
         reset();
@@ -135,6 +144,7 @@ var update = function() {
 }
 
 var keyDown = function(e) {
+    //A-key
     if(e.keyCode === 65) {
         if(p1VX === 1 && p1VY === 0) {
             p1VX = 0;
@@ -153,6 +163,7 @@ var keyDown = function(e) {
             p1VY = 0;
         }
     }
+    //D-key
     else if(e.keyCode === 68) {
         if(p1VX === 1 && p1VY === 0) {
             p1VX = 0;
@@ -171,7 +182,7 @@ var keyDown = function(e) {
             p1VY = 0;
         }
     }
-
+    //Left arrow-key
     if(e.keyCode === 37) {
         if(p2VX === 1 && p2VY === 0) {
             p2VX = 0;
@@ -190,6 +201,7 @@ var keyDown = function(e) {
             p2VY = 0;
         }
     }
+    //Right arrow-key
     else if(e.keyCode === 39) {
         if(p2VX === 1 && p2VY === 0) {
             p2VX = 0;
@@ -210,6 +222,7 @@ var keyDown = function(e) {
     }
 }
 
+//Resetting everything for first play
 reset();
 
 //Calls the update function sixty times per second
