@@ -20,9 +20,8 @@ document.getElementById("main").addEventListener("keydown", function () {
     keyDown(event);
 });
 
-//Initializing all canvases
+//Initializing secondary canvases
 var init = function (ctx) {
-    //Setting the canvas dimensions to the maximum available size within the window
     ctx.canvas.width = dimX;
     ctx.canvas.height = dimY;
 }
@@ -32,6 +31,7 @@ init(ffg_ctx);
 
 var drawScore = function() {
     fg_ctx.clearRect(0, 0, 100, 100);
+
     //Adding score display
     fg_ctx.strokeStyle = "#FFFFFF";
     fg_ctx.strokeText("Player 1: " + p1S, 20, 30);
@@ -120,9 +120,6 @@ var paintPlayers = function (ctx) {
     //Moving player 2
     p2X += p2VX;
     p2Y += p2VY;
-
-    ffg_ctx.clearRect(0, 0, dimX, dimY);
-    drawPlayerCircle(ffg_ctx);
 }
 
 //Drawing the yellow circle on the players position
@@ -142,7 +139,7 @@ var drawPlayerCircle = function (ctx) {
     ctx.closePath();
 }
 
-var reset = function (winner) {
+var reset = function () {
     //Clearing up from last game
     bg_ctx.clearRect(0, 0, dimX, dimY);
 
@@ -159,7 +156,7 @@ var reset = function (winner) {
     //Adding colors for the players
     p1C = randColor(), p2C = randColor();
 
-    drawScore();
+    //drawScore();
 }
 
 //Checking for collisions
@@ -189,6 +186,9 @@ var colDetection = function () {
 //Updating the canvas
 var update = function (colReturn) {
     paintPlayers(bg_ctx);
+
+    ffg_ctx.clearRect(0, 0, dimX, dimY);
+    drawPlayerCircle(ffg_ctx);
 
     colDetection();
 
@@ -260,6 +260,3 @@ var keyDown = function (e) {
 reset();
 
 update();
-
-//Calls the update function sixty times per second
-//window.setInterval(update, 50 / 3);
