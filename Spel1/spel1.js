@@ -29,13 +29,37 @@ var init = function (ctx) {
 init(fg_ctx);
 init(ffg_ctx);
 
-var drawScore = function() {
-    fg_ctx.clearRect(0, 0, 100, 100);
+var drawPlayerWidget = function (ctx) {
+    //fg_ctx.clearRect(0, 0, 100, 100);
 
-    //Adding score display
-    fg_ctx.strokeStyle = "#FFFFFF";
-    fg_ctx.strokeText("Player 1: " + p1S, 20, 30);
-    fg_ctx.strokeText("Player 2: " + p2S, 20, 50);
+    //Drawing player widget
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.strokeText("Player 1: ", 20, 30);
+    ctx.strokeText("Player 2: ", 20, 50);
+
+    ctx.beginPath();
+
+    ctx.lineWidth = 10;
+
+    ctx.moveTo(65, 27);
+    ctx.lineTo(100, 27);
+
+    ctx.strokeStyle = p1C;
+    ctx.stroke();
+
+    ctx.closePath();
+
+    ctx.beginPath();
+
+    ctx.lineWidth = 10;
+
+    ctx.moveTo(65, 47);
+    ctx.lineTo(100, 47);
+
+    ctx.strokeStyle = p2C;
+    ctx.stroke();
+
+    ctx.closePath();
 }
 
 //Returns random X and Y-values
@@ -70,7 +94,7 @@ var p2VX = 1,
 
 //Setting random speeds for the players
 var setRandSpeed = function (player) {
-    var n = randNum(-1, 2);
+    var n = randNum(-2, 2);
     if (n === -1 ||  n === 1) {
         window[player + "VX"] = 0;
         window[player + "VY"] = n;
@@ -81,8 +105,8 @@ var setRandSpeed = function (player) {
 }
 
 //Adding colors for the players
-var p1C = "",
-    p2C = "";
+var p1C = randColor(),
+    p2C = randColor();
 
 //Adding scores for the players
 var p1S = 0,
@@ -152,32 +176,33 @@ var reset = function () {
 
     //Adding arrays for storing line areas
     p1P = [[p1X], [p1Y]], p2P = [[p2X], [p2Y]];
-
-    //Adding colors for the players
-    p1C = randColor(), p2C = randColor();
-
-    //drawScore();
 }
 
 //Checking for collisions
 var colDetection = function () {
     for (var i = 0; i < p1P[0].length; i++) {
+        //Player 2 with player 1
         if (p1P[0][i] === p2X && p1P[1][i] === p2Y) {
             reset();
         }
+        //Player 1 with player 2
         if (p2P[0][i] === p1X && p2P[1][i] === p1Y) {
             reset();
         }
+        //Player 1 with self
         if (p1P[0][i] === p1X && p1P[1][i] === p1Y) {
             reset();
         }
+        //Player 2 with self
         if (p2P[0][i] === p2X && p2P[1][i] === p2Y) {
             reset();
         }
     }
+    //Player 1 with wall
     if (p1X >= dimX - 4 || p1X <= 4 || p1Y >= dimY - 4 || p1Y <= 4) {
         reset();
     }
+    //Player 2 with wall
     if (p2X >= dimX - 4 || p2X <= 4 || p2Y >= dimY - 4 || p2Y <= 4) {
         reset();
     }
@@ -187,8 +212,8 @@ var colDetection = function () {
 var update = function (colReturn) {
     paintPlayers(bg_ctx);
 
-    ffg_ctx.clearRect(0, 0, dimX, dimY);
-    drawPlayerCircle(ffg_ctx);
+    fg_ctx.clearRect(0, 0, dimX, dimY);
+    drawPlayerCircle(fg_ctx);
 
     colDetection();
 
@@ -256,6 +281,8 @@ var keyDown = function (e) {
         }
     }
 }
+
+drawPlayerWidget(ffg_ctx);
 
 reset();
 
