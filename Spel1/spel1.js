@@ -7,9 +7,13 @@ var bg_ctx = bg.getContext("2d"),
     fg_ctx = fg.getContext("2d"),
     ffg_ctx = ffg.getContext("2d");
 
+//Setting the canvas dimensions to the maximum available size within the window
+bg_ctx.canvas.width = window.innerWidth;
+bg_ctx.canvas.height = window.innerHeight;
+
 //Setting the height and width of the canvas to variables
-var dimX = 0,
-    dimY = 0;
+var dimX = bg_ctx.canvas.width,
+    dimY = bg_ctx.canvas.height;
 
 //Adding event handlers for the keys
 document.getElementById("main").addEventListener("keydown", function () {
@@ -19,27 +23,24 @@ document.getElementById("main").addEventListener("keydown", function () {
 //Initializing all canvases
 var init = function (ctx) {
     //Setting the canvas dimensions to the maximum available size within the window
-    ctx.canvas.width = window.innerWidth;
-    ctx.canvas.height = window.innerHeight;
-
-    //Setting the height and width of the canvas to variables
-    dimX = ctx.canvas.width, dimY = ctx.canvas.height;
+    ctx.canvas.width = dimX;
+    ctx.canvas.height = dimY;
 }
 
-init(bg_ctx);
 init(fg_ctx);
 init(ffg_ctx);
 
-//Adding score display
-fg_ctx.strokeStyle = "#FFFFFF";
-fg_ctx.strokeText("Player 1: ", 20, 30);
-fg_ctx.strokeText("Player 2: ", 20, 50);
-
-var i = 1;
+var drawScore = function() {
+    fg_ctx.clearRect(0, 0, 100, 100);
+    //Adding score display
+    fg_ctx.strokeStyle = "#FFFFFF";
+    fg_ctx.strokeText("Player 1: " + p1S, 20, 30);
+    fg_ctx.strokeText("Player 2: " + p2S, 20, 50);
+}
 
 //Returns random X and Y-values
 var randPos = function (axis) {
-    return (Math.floor(Math.random() * ((axis - 5) - 5 + 1) + 5));
+    return (Math.floor(Math.random() * ((axis - 100) - 100 + 1) + 100));
 }
 
 var randNum = function (max, min) {
@@ -49,16 +50,6 @@ var randNum = function (max, min) {
 //Returns random hex color
 var randColor = function () {
     return '#' + Math.floor(Math.random() * 16777215).toString(16)
-}
-
-function unique(array){
-  var seen = new Set;
-  return array.filter(function(item){
-    if (!seen.has(item)) {
-      seen.add(item);
-      return true;
-    }
-  });
 }
 
 //Adding starting dimensions for the players
@@ -97,139 +88,114 @@ var p1C = "",
 var p1S = 0,
     p2S = 0;
 
-//Drawing the score
-var drawScore = function (ctx) {
-    ctx.strokeStyle = "#FFFFFF";
-    ctx.strokeText(p1S, 62, 30);
-    ctx.strokeText(p2S, 62, 50);
-}
-
-//Drawing the players
-var paintPlayers = function (player, ctx) {
-    //Drawing player
+var paintPlayers = function (ctx) {
+    //Drawing player 1
     ctx.beginPath();
-    ctx.arc(window[player + "X"], window[player + "Y"], 5, 0, Math.PI * 2);
+    ctx.arc(p1X, p1Y, 5, 0, Math.PI * 2);
 
-    //Setting the color to a random one
-    ctx.strokeStyle = window[player + "C"];
+    ctx.strokeStyle = p1C;
     ctx.stroke();
     ctx.closePath();
 
-    //Adding player coords to array
-    window[player + "P"][0].push(window[player + "X"]);
-    window[player + "P"][1].push(window[player + "Y"]);
+    //Drawing player 2
+    ctx.beginPath();
+    ctx.arc(p2X, p2Y, 5, 0, Math.PI * 2);
 
-    //console.log(window[player + "P"]);
+    ctx.strokeStyle = p2C;
+    ctx.stroke();
+    ctx.closePath();
 
-    //Moving player
-    window[player + "X"] += window[player + "VX"];
-    window[player + "Y"] += window[player + "VY"];
+    //Adding player 1 coords to array
+    p1P[0].push(p1X);
+    p1P[1].push(p1Y);
+
+    //Moving player 1
+    p1X += p1VX;
+    p1Y += p1VY;
+
+    //Adding player 2 coords to array
+    p2P[0].push(p2X);
+    p2P[1].push(p2Y);
+
+    //Moving player 2
+    p2X += p2VX;
+    p2Y += p2VY;
+
+    ffg_ctx.clearRect(0, 0, dimX, dimY);
+    drawPlayerCircle(ffg_ctx);
 }
 
 //Drawing the yellow circle on the players position
-var drawPlayerCircle = function (player, ctx) {
+var drawPlayerCircle = function (ctx) {
     //Setting color to yellow
     ctx.fillStyle = "yellow";
 
     //Drawing player circle
     ctx.beginPath();
-    ctx.arc(window[player + "X"], window[player + "Y"], 5, 0, Math.PI * 2);
+    ctx.arc(p1X, p1Y, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.closePath();
+
+    ctx.beginPath();
+    ctx.arc(p2X, p2Y, 5, 0, Math.PI * 2);
     ctx.fill();
     ctx.closePath();
 }
 
-var reset = function () {
-    //Clearing up player paths from last game
+var reset = function (winner) {
+    //Clearing up from last game
     bg_ctx.clearRect(0, 0, dimX, dimY);
-
-    //Clearing away the old scores
-    fg_ctx.clearRect(62, 30, 30, 40);
-
-    //Drawing the new score
-    drawScore(fg_ctx);
-
-    p1P = [[], []];
-    p2P = [[], []];
 
     //Adding starting dimensions for the players
     p1X = randPos(dimX), p1Y = randPos(dimY);
     p2X = randPos(dimX), p2Y = randPos(dimY);
 
-    //Set speeds to either -1, 0 or 1
     setRandSpeed("p1");
     setRandSpeed("p2");
 
+    //Adding arrays for storing line areas
+    p1P = [[p1X], [p1Y]], p2P = [[p2X], [p2Y]];
+
     //Adding colors for the players
     p1C = randColor(), p2C = randColor();
+
+    drawScore();
 }
 
 //Checking for collisions
 var colDetection = function () {
-    unique(p1P[0]);
-    unique(p1P[1]);
-    unique(p2P[0]);
-    unique(p2P[1]);
-
     for (var i = 0; i < p1P[0].length; i++) {
-        //Player 2 into player 1
         if (p1P[0][i] === p2X && p1P[1][i] === p2Y) {
-            console.log("1");
-            p1S += 1;
             reset();
         }
-        //Player 1 into player 2
-        else if (p2P[0][i] === p1X && p2P[1][i] === p1Y) {
-            console.log("2");
-            p2S += 1;
+        if (p2P[0][i] === p1X && p2P[1][i] === p1Y) {
             reset();
         }
-        //Player 1 into self
-        else if (p1P[0][i] === p1X && p1P[1][i] === p1Y) {
-            console.log("3");
-            p2S += 1;
+        if (p1P[0][i] === p1X && p1P[1][i] === p1Y) {
             reset();
         }
-        //Player 2 into self
-        else if (p2P[0][i] === p2X && p2P[1][i] === p2Y) {
-            console.log("4");
-            p1S += 1;
+        if (p2P[0][i] === p2X && p2P[1][i] === p2Y) {
             reset();
         }
     }
-    //Player 1 into wall
-    if (p1X > dimX || p1X < 0 || p1Y > dimY ||  p1Y < 0) {
-            console.log("5");
-        p2S += 1;
+    if (p1X >= dimX - 4 || p1X <= 4 || p1Y >= dimY - 4 || p1Y <= 4) {
         reset();
     }
-    //Player 2 into wall
-    if (p2X > dimX || p2X < 0 || p2Y > dimY ||  p2Y < 0) {
-            console.log("6");
-        p1S += 1;
+    if (p2X >= dimX - 4 || p2X <= 4 || p2Y >= dimY - 4 || p2Y <= 4) {
         reset();
     }
 }
 
 //Updating the canvas
-var update = function () {
-    paintPlayers("p1", bg_ctx);
-    paintPlayers("p2", bg_ctx);
-
-    //Clearing away the old player circles
-    ffg_ctx.clearRect(0, 0, dimX, dimY);
-
-    drawPlayerCircle("p1", ffg_ctx);
-    drawPlayerCircle("p2", ffg_ctx);
+var update = function (colReturn) {
+    paintPlayers(bg_ctx);
 
     colDetection();
 
-    //Using requestAnimationFrame instead of setInterval for much smoother updating
     requestAnimationFrame(update);
 }
 
-//Checking for keys being pressed
 var keyDown = function (e) {
-    //A-key
     if (e.keyCode === 65) {
         if (p1VX === 1 && p1VY === 0) {
             p1VX = 0;
@@ -244,9 +210,7 @@ var keyDown = function (e) {
             p1VX = -1;
             p1VY = 0;
         }
-    }
-    //D-key
-    else if (e.keyCode === 68) {
+    } else if (e.keyCode === 68) {
         if (p1VX === 1 && p1VY === 0) {
             p1VX = 0;
             p1VY = 1;
@@ -261,7 +225,7 @@ var keyDown = function (e) {
             p1VY = 0;
         }
     }
-    //Left arrow-key
+
     if (e.keyCode === 37) {
         if (p2VX === 1 && p2VY === 0) {
             p2VX = 0;
@@ -276,9 +240,7 @@ var keyDown = function (e) {
             p2VX = -1;
             p2VY = 0;
         }
-    }
-    //Right arrow-key
-    else if (e.keyCode === 39) {
+    } else if (e.keyCode === 39) {
         if (p2VX === 1 && p2VY === 0) {
             p2VX = 0;
             p2VY = 1;
@@ -295,8 +257,9 @@ var keyDown = function (e) {
     }
 }
 
-//Resetting everything for first play
 reset();
 
-//Starting the canvas updating
 update();
+
+//Calls the update function sixty times per second
+//window.setInterval(update, 50 / 3);
