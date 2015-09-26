@@ -100,10 +100,10 @@ var p2LeftKey = 37,
 //Setting random speeds for the players
 var setRandSpeed = function (player) {
     var n = randNum(-2, 2);
-    if (n === -1 ||  n === 1) {
+    if (n === -1 || n === 1) {
         window[player + "VX"] = 0;
         window[player + "VY"] = n;
-    } else if (n === 0 ||  n === 2) {
+    } else if (n === 0 || n === 2) {
         window[player + "VY"] = n - 1;
         window[player + "VY"] = 0;
     }
