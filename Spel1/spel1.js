@@ -8,6 +8,7 @@ var bg_ctx = bg.getContext("2d"),
     ffg_ctx = ffg.getContext("2d");
 
 var mainLoop;
+var gameStarted = "false";
 
 //Setting the canvas dimensions to the maximum available size within the window
 bg_ctx.canvas.width = window.innerWidth;
@@ -17,9 +18,57 @@ bg_ctx.canvas.height = window.innerHeight;
 var dimX = bg_ctx.canvas.width,
     dimY = bg_ctx.canvas.height;
 
+//Returns random hex color
+var randColor = function () {
+    return '#' + Math.floor(Math.random() * 16777215).toString(16);
+}
+
 //Adding event handlers for the keys
 document.getElementById("main").addEventListener("keydown", function () {
     keyDown(event);
+});
+
+colorPicker1 = document.getElementById("colorPicker1");
+colorPicker2 = document.getElementById("colorPicker2");
+
+colorPicker1.value = randColor();
+colorPicker2.value = randColor();
+
+colorPicker1.addEventListener("change", function () {
+    p1C = event.srcElement.value;
+    //colorChange(event, 1);
+});
+colorPicker2.addEventListener("change", function () {
+    p2C = event.srcElement.value;
+    //colorChange(event, 2);
+});
+
+document.getElementById("name1").addEventListener("change", function () {
+    //drawPlayerWidget(ffg_ctx, event, 1);
+    firstName = event.srcElement.value;
+    firstNameAdded = true;
+});
+document.getElementById("name2").addEventListener("change", function () {
+    //drawPlayerWidget(ffg_ctx, event, 2);
+    secondName = event.srcElement.value;
+    secondNameAdded = true;
+});
+
+document.getElementById("leftKey1").addEventListener("change", function () {
+    p1LeftKey = event.srcElement.value.charCodeAt(0);
+});
+
+document.getElementById("rightKey1").addEventListener("change", function () {
+    p1RightKey = event.srcElement.value.charCodeAt(0);
+});
+
+document.getElementById("leftKey2").addEventListener("change", function () {
+    p2LeftKey = event.srcElement.value.charCodeAt(0);
+    alert(p2LeftKey);
+});
+
+document.getElementById("rightKey2").addEventListener("change", function () {
+    p2RightKey = event.srcElement.value.charCodeAt(0);
 });
 
 //Initializing secondary canvases
@@ -31,35 +80,43 @@ var init = function (ctx) {
 init(fg_ctx);
 init(ffg_ctx);
 
+var firstNameAdded = false;
+var secondNameAdded = false;
+
+var firstName = "";
+var secondName = "";
+
 var drawPlayerWidget = function (ctx) {
-    //Drawing player widget
-    ctx.strokeStyle = "#FFFFFF";
-    ctx.strokeText("Player 1: ", 20, 30);
-    ctx.strokeText("Player 2: ", 20, 50);
+    if(firstNameAdded && secondNameAdded && gameStarted) {
+        //Drawing player widget
+        ctx.strokeStyle = "#FFFFFF";
+        ctx.strokeText(firstName + ":", 20, 30);
+        ctx.strokeText(secondName + ":", 20, 50);
 
-    ctx.beginPath();
+        ctx.beginPath();
 
-    ctx.lineWidth = 10;
+        ctx.lineWidth = 10;
 
-    ctx.moveTo(65, 27);
-    ctx.lineTo(100, 27);
+        ctx.moveTo(65, 27);
+        ctx.lineTo(100, 27);
 
-    ctx.strokeStyle = p1C;
-    ctx.stroke();
+        ctx.strokeStyle = p1C;
+        ctx.stroke();
 
-    ctx.closePath();
+        ctx.closePath();
 
-    ctx.beginPath();
+        ctx.beginPath();
 
-    ctx.lineWidth = 10;
+        ctx.lineWidth = 10;
 
-    ctx.moveTo(65, 47);
-    ctx.lineTo(100, 47);
+        ctx.moveTo(65, 47);
+        ctx.lineTo(100, 47);
 
-    ctx.strokeStyle = p2C;
-    ctx.stroke();
+        ctx.strokeStyle = p2C;
+        ctx.stroke();
 
-    ctx.closePath();
+        ctx.closePath();
+    }
 }
 
 //Returns random X and Y-values
@@ -69,11 +126,6 @@ var randPos = function (axis) {
 
 var randNum = function (max, min) {
     return (Math.floor(Math.random() * (max - min + 1)) + min);
-}
-
-//Returns random hex color
-var randColor = function () {
-    return '#' + Math.floor(Math.random() * 16777215).toString(16)
 }
 
 //Adding starting dimensions for the players
@@ -97,6 +149,9 @@ var p1LeftKey = 65,
 var p2LeftKey = 37,
     p2RightKey = 39;
 
+var holeTimer = 350,
+    noHoleTimer = 75;
+
 //Setting random speeds for the players
 var setRandSpeed = function (player) {
     var n = randNum(-2, 2);
@@ -110,43 +165,62 @@ var setRandSpeed = function (player) {
 }
 
 //Adding colors for the players
-var p1C = randColor(),
-    p2C = randColor();
-
-var gameStarted = "false";
+var p1C = document.getElementById("colorPicker1").value,
+    p2C = document.getElementById("colorPicker2").value;
 
 var paintPlayers = function (ctx) {
-    //Drawing player 1
-    ctx.beginPath();
-    ctx.arc(p1X, p1Y, 5, 0, Math.PI * 2);
+    if (holeTimer > 0) {
+        //Drawing player 1
+        ctx.beginPath();
+        ctx.arc(p1X, p1Y, 5, 0, Math.PI * 2);
 
-    ctx.strokeStyle = p1C;
-    ctx.stroke();
-    ctx.closePath();
+        ctx.strokeStyle = p1C;
+        ctx.stroke();
+        ctx.closePath();
 
-    //Drawing player 2
-    ctx.beginPath();
-    ctx.arc(p2X, p2Y, 5, 0, Math.PI * 2);
+        //Drawing player 2
+        ctx.beginPath();
+        ctx.arc(p2X, p2Y, 5, 0, Math.PI * 2);
 
-    ctx.strokeStyle = p2C;
-    ctx.stroke();
-    ctx.closePath();
+        ctx.strokeStyle = p2C;
+        ctx.stroke();
+        ctx.closePath();
 
-    //Adding player 1 coords to array
-    p1P[0].push(p1X);
-    p1P[1].push(p1Y);
+        //Adding player 1 coords to array
+        p1P[0].push(p1X);
+        p1P[1].push(p1Y);
 
-    //Moving player 1
-    p1X += p1VX;
-    p1Y += p1VY;
+        //Moving player 1
+        p1X += p1VX;
+        p1Y += p1VY;
 
-    //Adding player 2 coords to array
-    p2P[0].push(p2X);
-    p2P[1].push(p2Y);
+        //Adding player 2 coords to array
+        p2P[0].push(p2X);
+        p2P[1].push(p2Y);
 
-    //Moving player 2
-    p2X += p2VX;
-    p2Y += p2VY;
+        //Moving player 2
+        p2X += p2VX;
+        p2Y += p2VY;
+
+        holeTimer -= 1;
+    } else {
+        if (noHoleTimer > 0) {
+            //Moving player 1
+            p1X += p1VX;
+            p1Y += p1VY;
+
+            //Moving player 2
+            p2X += p2VX;
+            p2Y += p2VY;
+
+            noHoleTimer -= 1;
+        } else {
+            holeTimer = 350;
+            noHoleTimer = 75;
+
+            paintPlayers(bg_ctx);
+        }
+    }
 }
 
 //Drawing the yellow circle on the players position
@@ -224,6 +298,7 @@ var update = function (colReturn) {
 }
 
 var keyDown = function (e) {
+    console.log(e.keyCode);
     if (e.keyCode === 32 && gameStarted === "false") {
         start();
     } else if (e.keyCode === 32 && gameStarted === "menu") {
@@ -298,14 +373,16 @@ var keyDown = function (e) {
 var start = function () {
     gameStarted = "true";
 
-    document.getElementById("start").style.display = "none";
+    document.getElementById("menu").style.display = "none";
 
     var canvases = document.getElementsByClassName("canv");
     for (var i = 0; i < canvases.length; i += 1) {
         canvases[i].style.display = "block";
     }
 
-    drawPlayerWidget(ffg_ctx);
+    console.log(p2RightKey);
+
+    //drawPlayerWidget(ffg_ctx);
     reset();
     update();
 }
@@ -313,11 +390,12 @@ var start = function () {
 var menu = function () {
     gameStarted = "menu";
 
-    document.getElementById("start").style.display = "block";
+    document.getElementById("menu").style.display = "block";
 
     var canvases = document.getElementsByClassName("canv");
     for (var i = 0; i < canvases.length; i += 1) {
         canvases[i].style.display = "none";
+        //canvases[i].style.backgroundColor = "grey";
     }
 
     cancelAnimationFrame(mainLoop);
@@ -326,11 +404,12 @@ var menu = function () {
 var resume = function () {
     gameStarted = "true";
 
-    document.getElementById("start").style.display = "none";
+    document.getElementById("menu").style.display = "none";
 
     var canvases = document.getElementsByClassName("canv");
     for (var i = 0; i < canvases.length; i += 1) {
         canvases[i].style.display = "block";
+        //canvases[i].style.backgroundColor = "black";
     }
 
     update();

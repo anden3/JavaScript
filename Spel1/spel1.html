@@ -7,8 +7,32 @@
 </head>
 
 <body id="main">
-    <div id="start">
-        <h1>Achtung die Copyright</h1>
+    <div id="menu">
+        <h1>Configuration</h1>
+        <div id="conf">
+            <div class="row">
+                <p><b>Player 1:</b></p>
+                <p>Name = </p>
+                <input type="text" id="name1" value="Player 1" />
+                <p>Color = </p>
+                <input type="color" id="colorPicker1" />
+                <p>Left key = </p>
+                <input type="text" id="leftKey1" value="a" />
+                <p>Right key = </p>
+                <input type="text" id="rightKey1" value="d">
+            </div>
+            <div class="row">
+                <p><b>Player 2:</b></p>
+                <p>Name = </p>
+                <input type="text" id="name2" value="Player 2" />
+                <p>Color = </p>
+                <input type="color" id="colorPicker2" />
+                <p>Left key = </p>
+                <input type="text" id="leftKey2" value="j" />
+                <p>Right key = </p>
+                <input type="text" id="rightKey2" value="l">
+            </div>
+        </div>
     </div>
 
     <canvas id="bg" class="canv"></canvas>

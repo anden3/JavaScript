@@ -6,8 +6,27 @@ body {
     overflow: hidden;
 }
 
-#start {
+#menu {
+    padding: 10px 0 0 10px;
+    z-index: 10;
+    background-color: transparent;
+}
 
+#menu h1 {
+    margin: 0;
+}
+
+#conf {
+    margin-top: 20px;
+}
+
+.row {
+    display: block;
+    margin-top: 10px;
+}
+
+.row * {
+    display: inline;
 }
 
 .canv {
