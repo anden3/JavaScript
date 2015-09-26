@@ -1,20 +1,44 @@
 //Saving the canvas and its content to variables
-var canvas = document.getElementById("canv");
-var ctx = canvas.getContext("2d");
+var bg = document.getElementById("bg");
+var fg = document.getElementById("fg");
+var ffg = document.getElementById("ffg");
 
-//Setting the canvas dimensions to the maximum available size within the window
-ctx.canvas.width = window.innerWidth;
-ctx.canvas.height = window.innerHeight;
+var bg_ctx = bg.getContext("2d");
+var fg_ctx = fg.getContext("2d");
+var ffg_ctx = ffg.getContext("2d");
 
 //Setting the height and width of the canvas to variables
-var dimX = ctx.canvas.width, dimY = ctx.canvas.height;
+var dimX = 0, dimY = 0;
 
 //Adding event handlers for the keys
 document.getElementById("main").addEventListener("keydown", function(){ keyDown(event); });
 
+//Initializing all canvases
+var init = function(ctx) {
+    //Setting the canvas dimensions to the maximum available size within the window
+    ctx.canvas.width = window.innerWidth;
+    ctx.canvas.height = window.innerHeight;
+
+    //Setting the height and width of the canvas to variables
+    dimX = ctx.canvas.width, dimY = ctx.canvas.height;
+}
+
+init(bg_ctx);
+init(fg_ctx);
+init(ffg_ctx);
+
+//Adding score display
+fg_ctx.strokeStyle = "#FFFFFF";
+fg_ctx.strokeText("Player 1: ", 20, 30);
+fg_ctx.strokeText("Player 2: ", 20, 50);
+
 //Returns random X and Y-values
 var randPos = function(axis) {
     return (Math.floor(Math.random() * ((axis - 5) - 5 + 1) + 5));
+}
+
+var randNum = function(max, min) {
+    return (Math.floor(Math.random() * (max - min + 1)) + min);
 }
 
 //Returns random hex color
@@ -30,8 +54,21 @@ var p2X = 0, p2Y = 0;
 var p1P = [[], []], p2P = [[], []];
 
 //Adding speeds for the players
-var p1VX = 1, p1VY = 0;
-var p2VX = 1, p2VY = 0;
+var p1VX = 1, p1VY = 1;
+var p2VX = 1, p2VY = 1;
+
+//Setting random speeds for the players
+var setRandSpeed = function(player) {
+    var n = randNum(-1, 2);
+    if(n === -1 || n === 1) {
+        window[player + "VX"] = 0;
+        window[player + "VY"] = n;
+    }
+    else if(n === 0 || n === 2) {
+        window[player + "VY"] = n - 1;
+        window[player + "VY"] = 0;
+    }
+}
 
 //Adding colors for the players
 var p1C = "", p2C = "";
@@ -40,59 +77,64 @@ var p1C = "", p2C = "";
 var p1S = 0, p2S = 0;
 
 //Drawing the score
-var drawScore = function() {
+var drawScore = function(ctx) {
     ctx.strokeStyle = "#FFFFFF";
-    ctx.strokeText("Player 1: " + p1S, 20, 30);
-    ctx.strokeText("Player 2: " + p2S, 20, 50);
+    ctx.strokeText(p1S, 62, 30);
+    ctx.strokeText(p2S, 62, 50);
 }
 
 //Drawing the players
-var paintPlayers = function() {
-    //Drawing player 1
+var paintPlayers = function(player, ctx) {
+    //Drawing player
     ctx.beginPath();
-        ctx.arc(p1X, p1Y, 5, 0, Math.PI * 2);
+        ctx.arc(window[player + "X"], window[player + "Y"], 5, 0, Math.PI * 2);
 
         //Setting the color to a random one
-        ctx.strokeStyle = p1C;
+        ctx.strokeStyle = window[player + "C"];
         ctx.stroke();
     ctx.closePath();
 
-    //Drawing player 2
-    ctx.beginPath();
-        ctx.arc(p2X, p2Y, 5, 0, Math.PI * 2);
+    //Adding player coords to array
+    window[player + "P"][0].push(window[player + "X"]);
+    window[player + "P"][1].push(window[player + "Y"]);
 
-        //Setting the color to a random one
-        ctx.strokeStyle = p2C;
-        ctx.stroke();
-    ctx.closePath();
-
-    //Adding player 1 coords to array
-    p1P[0].push(p1X);
-    p1P[1].push(p1Y);
-
-    //Moving player 1
-    p1X += p1VX;
-    p1Y += p1VY;
-
-    //Adding player 2 coords to array
-    p2P[0].push(p2X);
-    p2P[1].push(p2Y);
-
-    //Moving player 2
-    p2X += p2VX;
-    p2Y += p2VY;
+    //Moving player
+    window[player + "X"] += window[player + "VX"];
+    window[player + "Y"] += window[player + "VY"];
 }
 
-var reset = function() {
-    //Clearing up from last game
+//Drawing the yellow circle on the players position
+var drawPlayerCircle = function(player, ctx) {
+    //Clearing away the old circle
     ctx.clearRect(0, 0, dimX, dimY);
 
-    //Drawing the score
-    drawScore();
+    //Setting color to yellow
+    ctx.fillStyle = "yellow";
+
+    //Drawing player circle
+    ctx.beginPath();
+        ctx.arc(window[player + "X"], window[player + "Y"], 5, 0, Math.PI * 2);
+        ctx.fill();
+    ctx.closePath();
+}
+
+var reset = function(ctx) {
+    //Clearing up player paths from last game
+    bg_ctx.clearRect(0, 0, dimX, dimY);
+
+    //Clearing away the old scores
+    fg_ctx.clearRect(62, 30, 30, 40);
+
+    //Drawing the new score
+    drawScore(fg_ctx);
 
     //Adding starting dimensions for the players
     p1X = randPos(dimX), p1Y = randPos(dimY);
     p2X = randPos(dimX), p2Y = randPos(dimY);
+
+    //Set speeds to either -1, 0 or 1
+    setRandSpeed("p1");
+    setRandSpeed("p2");
 
     //Adding arrays for storing line areas
     p1P = [[p1X], [p1Y]], p2P = [[p2X], [p2Y]];
@@ -105,7 +147,7 @@ var reset = function() {
 var colDetection = function() {
     for(var i = 0; i < p1P[0].length; i++) {
         //Player 2 into player 1
-        if(p1P[0][i] === p2X && p1P[1][i] === p2Y) {
+        if(p1P[0][i] === p2X + 4 && p1P[1][i] === p2Y) {
             p1S += 1;
             reset();
         }
@@ -139,10 +181,19 @@ var colDetection = function() {
 
 //Updating the canvas
 var update = function() {
-    paintPlayers();
+    paintPlayers("p1", bg_ctx);
+    paintPlayers("p2", bg_ctx);
+
+    drawPlayerCircle("p1", ffg_ctx);
+    drawPlayerCircle("p2", ffg_ctx);
+
     colDetection();
+
+    //Using requestAnimationFrame instead of setInterval for much smoother updating
+    requestAnimationFrame(update);
 }
 
+//Checking for keys being pressed
 var keyDown = function(e) {
     //A-key
     if(e.keyCode === 65) {
@@ -225,5 +276,5 @@ var keyDown = function(e) {
 //Resetting everything for first play
 reset();
 
-//Calls the update function sixty times per second
-window.setInterval(update, 50 / 3);
+//Starting the canvas updating
+update();

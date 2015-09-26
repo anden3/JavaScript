@@ -5,6 +5,19 @@ html, body {
     overflow: hidden;
 }
 
-#canv {
+canvas {
+    position: absolute;
+}
+
+#bg {
     background-color: black;
+    z-index: 0;
+}
+
+#fg {
+    z-index: 1;
+}
+
+#ffg {
+    z-index: 2;
 }
