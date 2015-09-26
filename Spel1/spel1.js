@@ -1,4 +1,4 @@
-//Saving the canvas and its content to variables
+//Saving the canvases and their content to variables
 var bg = document.getElementById("bg"),
     fg = document.getElementById("fg"),
     ffg = document.getElementById("ffg");
@@ -6,6 +6,8 @@ var bg = document.getElementById("bg"),
 var bg_ctx = bg.getContext("2d"),
     fg_ctx = fg.getContext("2d"),
     ffg_ctx = ffg.getContext("2d");
+
+var mainLoop;
 
 //Setting the canvas dimensions to the maximum available size within the window
 bg_ctx.canvas.width = window.innerWidth;
@@ -30,8 +32,6 @@ init(fg_ctx);
 init(ffg_ctx);
 
 var drawPlayerWidget = function (ctx) {
-    //fg_ctx.clearRect(0, 0, 100, 100);
-
     //Drawing player widget
     ctx.strokeStyle = "#FFFFFF";
     ctx.strokeText("Player 1: ", 20, 30);
@@ -92,6 +92,11 @@ var p1VX = 1,
 var p2VX = 1,
     p2VY = 1;
 
+var p1LeftKey = 65,
+    p1RightKey = 68;
+var p2LeftKey = 37,
+    p2RightKey = 39;
+
 //Setting random speeds for the players
 var setRandSpeed = function (player) {
     var n = randNum(-2, 2);
@@ -108,9 +113,7 @@ var setRandSpeed = function (player) {
 var p1C = randColor(),
     p2C = randColor();
 
-//Adding scores for the players
-var p1S = 0,
-    p2S = 0;
+var gameStarted = "false";
 
 var paintPlayers = function (ctx) {
     //Drawing player 1
@@ -217,11 +220,21 @@ var update = function (colReturn) {
 
     colDetection();
 
-    requestAnimationFrame(update);
+    mainLoop = requestAnimationFrame(update);
 }
 
 var keyDown = function (e) {
-    if (e.keyCode === 65) {
+    if (e.keyCode === 32 && gameStarted === "false") {
+        start();
+    } else if (e.keyCode === 32 && gameStarted === "menu") {
+        resume();
+    }
+
+    if (e.keyCode === 27 && gameStarted === "true") {
+        menu();
+    }
+
+    if (e.keyCode === p1LeftKey) {
         if (p1VX === 1 && p1VY === 0) {
             p1VX = 0;
             p1VY = -1;
@@ -235,7 +248,7 @@ var keyDown = function (e) {
             p1VX = -1;
             p1VY = 0;
         }
-    } else if (e.keyCode === 68) {
+    } else if (e.keyCode === p1RightKey) {
         if (p1VX === 1 && p1VY === 0) {
             p1VX = 0;
             p1VY = 1;
@@ -251,7 +264,7 @@ var keyDown = function (e) {
         }
     }
 
-    if (e.keyCode === 37) {
+    if (e.keyCode === p2LeftKey) {
         if (p2VX === 1 && p2VY === 0) {
             p2VX = 0;
             p2VY = -1;
@@ -265,7 +278,7 @@ var keyDown = function (e) {
             p2VX = -1;
             p2VY = 0;
         }
-    } else if (e.keyCode === 39) {
+    } else if (e.keyCode === p2RightKey) {
         if (p2VX === 1 && p2VY === 0) {
             p2VX = 0;
             p2VY = 1;
@@ -282,8 +295,43 @@ var keyDown = function (e) {
     }
 }
 
-drawPlayerWidget(ffg_ctx);
+var start = function () {
+    gameStarted = "true";
 
-reset();
+    document.getElementById("start").style.display = "none";
 
-update();
+    var canvases = document.getElementsByClassName("canv");
+    for (var i = 0; i < canvases.length; i += 1) {
+        canvases[i].style.display = "block";
+    }
+
+    drawPlayerWidget(ffg_ctx);
+    reset();
+    update();
+}
+
+var menu = function () {
+    gameStarted = "menu";
+
+    document.getElementById("start").style.display = "block";
+
+    var canvases = document.getElementsByClassName("canv");
+    for (var i = 0; i < canvases.length; i += 1) {
+        canvases[i].style.display = "none";
+    }
+
+    cancelAnimationFrame(mainLoop);
+}
+
+var resume = function () {
+    gameStarted = "true";
+
+    document.getElementById("start").style.display = "none";
+
+    var canvases = document.getElementsByClassName("canv");
+    for (var i = 0; i < canvases.length; i += 1) {
+        canvases[i].style.display = "block";
+    }
+
+    update();
+}
