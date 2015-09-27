@@ -92,36 +92,41 @@ var drawPlayerWidget = function (ctx) {
         ctx.strokeStyle = "#FFFFFF";
         ctx.strokeText(firstName + ":", 20, 30);
         ctx.strokeText(secondName + ":", 20, 50);
-
-        ctx.beginPath();
-
-        ctx.lineWidth = 10;
-
-        ctx.moveTo(65, 27);
-        ctx.lineTo(100, 27);
-
-        ctx.strokeStyle = p1C;
-        ctx.stroke();
-
-        ctx.closePath();
-
-        ctx.beginPath();
-
-        ctx.lineWidth = 10;
-
-        ctx.moveTo(65, 47);
-        ctx.lineTo(100, 47);
-
-        ctx.strokeStyle = p2C;
-        ctx.stroke();
-
-        ctx.closePath();
     }
+    else {
+        ctx.strokeStyle = "#FFFFFF";
+        ctx.strokeText("Player 1:", 20, 30);
+        ctx.strokeText("Player 2:", 20, 50);
+    }
+
+    ctx.beginPath();
+
+    ctx.lineWidth = 10;
+
+    ctx.moveTo(65, 27);
+    ctx.lineTo(100, 27);
+
+    ctx.strokeStyle = p1C;
+    ctx.stroke();
+
+    ctx.closePath();
+
+    ctx.beginPath();
+
+    ctx.lineWidth = 10;
+
+    ctx.moveTo(65, 47);
+    ctx.lineTo(100, 47);
+
+    ctx.strokeStyle = p2C;
+    ctx.stroke();
+
+    ctx.closePath();
 }
 
 //Returns random X and Y-values
 var randPos = function (axis) {
-    return (Math.floor(Math.random() * ((axis - 100) - 100 + 1) + 100));
+    return (Math.floor(Math.random() * ((axis - 50) - 50 + 1) + 50));
 }
 
 var randNum = function (max, min) {
@@ -149,7 +154,7 @@ var p1LeftKey = 65,
 var p2LeftKey = 37,
     p2RightKey = 39;
 
-var holeTimer = 350,
+var holeTimer = 0,
     noHoleTimer = 75;
 
 //Setting random speeds for the players
@@ -231,7 +236,14 @@ var drawPlayerCircle = function (ctx) {
     //Drawing player circle
     ctx.beginPath();
     ctx.arc(p1X, p1Y, 5, 0, Math.PI * 2);
+    ctx.fillText(firstName, p1X - 5, p1Y - 5);
     ctx.fill();
+    ctx.closePath();
+
+    ctx.beginPath();
+    ctx.strokeText(firstName, p1X - 5, p1Y - 5);
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.stroke();
     ctx.closePath();
 
     ctx.beginPath();
@@ -298,7 +310,6 @@ var update = function (colReturn) {
 }
 
 var keyDown = function (e) {
-    console.log(e.keyCode);
     if (e.keyCode === 32 && gameStarted === "false") {
         start();
     } else if (e.keyCode === 32 && gameStarted === "menu") {
@@ -380,9 +391,7 @@ var start = function () {
         canvases[i].style.display = "block";
     }
 
-    console.log(p2RightKey);
-
-    //drawPlayerWidget(ffg_ctx);
+    drawPlayerWidget(ffg_ctx);
     reset();
     update();
 }
