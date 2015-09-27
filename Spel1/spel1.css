@@ -20,6 +20,10 @@ body {
     margin-top: 20px;
 }
 
+#conf h2 {
+    margin-left: 20px;
+}
+
 .row {
     display: block;
     margin-top: 10px;
@@ -27,6 +31,16 @@ body {
 
 .row * {
     display: inline;
+    margin-left: 10px;
+}
+
+.keys {
+    width: 30px;
+    height: 20px;
+    border: 1px solid black;
+    display: inline-block;
+    border-radius: 3px;
+    text-align: center;
 }
 
 .canv {

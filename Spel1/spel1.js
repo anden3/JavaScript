@@ -36,40 +36,29 @@ colorPicker2.value = randColor();
 
 colorPicker1.addEventListener("change", function () {
     p1C = event.srcElement.value;
-    //colorChange(event, 1);
 });
 colorPicker2.addEventListener("change", function () {
     p2C = event.srcElement.value;
-    //colorChange(event, 2);
 });
 
 document.getElementById("name1").addEventListener("change", function () {
-    //drawPlayerWidget(ffg_ctx, event, 1);
     firstName = event.srcElement.value;
     firstNameAdded = true;
 });
 document.getElementById("name2").addEventListener("change", function () {
-    //drawPlayerWidget(ffg_ctx, event, 2);
     secondName = event.srcElement.value;
     secondNameAdded = true;
 });
 
-document.getElementById("leftKey1").addEventListener("change", function () {
-    p1LeftKey = event.srcElement.value.charCodeAt(0);
-});
+document.getElementById("p1LeftKey").innerHTML = "A";
+document.getElementById("p1RightKey").innerHTML = "D";
+document.getElementById("p2LeftKey").innerHTML = "J";
+document.getElementById("p2RightKey").innerHTML = "L";
 
-document.getElementById("rightKey1").addEventListener("change", function () {
-    p1RightKey = event.srcElement.value.charCodeAt(0);
-});
-
-document.getElementById("leftKey2").addEventListener("change", function () {
-    p2LeftKey = event.srcElement.value.charCodeAt(0);
-    alert(p2LeftKey);
-});
-
-document.getElementById("rightKey2").addEventListener("change", function () {
-    p2RightKey = event.srcElement.value.charCodeAt(0);
-});
+var keyHandler = function(e, player, direction) {
+    window[player + direction + "Key"] = event.keyCode;
+    document.getElementById(player + direction + "Key").innerHTML = String.fromCharCode(event.keyCode);
+}
 
 //Initializing secondary canvases
 var init = function (ctx) {
@@ -94,9 +83,13 @@ var drawPlayerWidget = function (ctx) {
         ctx.strokeText(secondName + ":", 20, 50);
     }
     else {
-        ctx.strokeStyle = "#FFFFFF";
-        ctx.strokeText("Player 1:", 20, 30);
-        ctx.strokeText("Player 2:", 20, 50);
+        firstName = "Player 1";
+        secondName = "Player 2";
+
+        firstNameAdded = true;
+        secondNameAdded = true;
+
+        drawPlayerWidget(ffg_ctx);
     }
 
     ctx.beginPath();
@@ -151,10 +144,10 @@ var p2VX = 1,
 
 var p1LeftKey = 65,
     p1RightKey = 68;
-var p2LeftKey = 37,
-    p2RightKey = 39;
+var p2LeftKey = 74,
+    p2RightKey = 76;
 
-var holeTimer = 0,
+var holeTimer = -100,
     noHoleTimer = 75;
 
 //Setting random speeds for the players
@@ -235,20 +228,22 @@ var drawPlayerCircle = function (ctx) {
 
     //Drawing player circle
     ctx.beginPath();
+
     ctx.arc(p1X, p1Y, 5, 0, Math.PI * 2);
-    ctx.fillText(firstName, p1X - 5, p1Y - 5);
+    ctx.fillStyle = "#FFFFFF";
+    ctx.lineWidth = 1;
+    ctx.fillText(firstName, p1X - ctx.measureText(firstName).width / 2, p1Y - 10);
     ctx.fill();
+
     ctx.closePath();
 
     ctx.beginPath();
-    ctx.strokeText(firstName, p1X - 5, p1Y - 5);
-    ctx.strokeStyle = "#FFFFFF";
-    ctx.stroke();
-    ctx.closePath();
 
-    ctx.beginPath();
     ctx.arc(p2X, p2Y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText(secondName, p2X - ctx.measureText(secondName).width / 2, p2Y - 10);
     ctx.fill();
+
     ctx.closePath();
 }
 

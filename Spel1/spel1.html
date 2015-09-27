@@ -17,9 +17,9 @@
                 <p>Color = </p>
                 <input type="color" id="colorPicker1" />
                 <p>Left key = </p>
-                <input type="text" id="leftKey1" value="a" />
+                <div id="p1LeftKey" class="keys" tabindex="0" onkeydown="keyHandler(event, 'p1', 'Left')"></div>
                 <p>Right key = </p>
-                <input type="text" id="rightKey1" value="d">
+                <div id="p1RightKey" class="keys" tabindex="0" onkeydown="keyHandler(event, 'p1', 'Right')"></div>
             </div>
             <div class="row">
                 <p><b>Player 2:</b></p>
@@ -28,10 +28,11 @@
                 <p>Color = </p>
                 <input type="color" id="colorPicker2" />
                 <p>Left key = </p>
-                <input type="text" id="leftKey2" value="j" />
+                <div id="p2LeftKey" class="keys" tabindex="0" onkeydown="keyHandler(event, 'p2', 'Left')"></div>
                 <p>Right key = </p>
-                <input type="text" id="rightKey2" value="l">
+                <div id="p2RightKey" class="keys" tabindex="0" onkeydown="keyHandler(event, 'p2', 'Right')"></div>
             </div>
+            <h2>Press Space to start!</h2>
         </div>
     </div>
 
