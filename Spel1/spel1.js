@@ -1,11 +1,15 @@
 //Saving the canvases and their content to variables
 var bg = document.getElementById("bg"),
     fg = document.getElementById("fg"),
-    ffg = document.getElementById("ffg");
+    ffg = document.getElementById("ffg"),
+    off_canv1 = document.createElement("CANVAS"),
+    off_canv2 = document.createElement("CANVAS");
 
 var bg_ctx = bg.getContext("2d"),
     fg_ctx = fg.getContext("2d"),
-    ffg_ctx = ffg.getContext("2d");
+    ffg_ctx = ffg.getContext("2d"),
+    off_ctx1 = off_canv1.getContext("2d"),
+    off_ctx2 = off_canv2.getContext("2d");
 
 //Saving the canvases to a list
 var canvases = document.getElementsByClassName("canv");
@@ -26,7 +30,8 @@ var init = function (ctx) {
 
 //Setting up all the non-player relevant variables
 var players = 2;
-var gameStarted = "false";
+var speed = 1;
+var gameStatus = "false";
 
 //Adding a few default controls and their corresponding keycodes
 var defaultControls = ["A", "S", "J", "K", "V", "B", "U", "I", "R", "T"],
@@ -81,12 +86,18 @@ var vars = function (player) {
     window["p" + player + "P"] = [[], []];
 
     //Adding speeds for the players
-    window["p" + player + "VX"] = 1;
-    window["p" + player + "VY"] = 1;
+    window["p" + player + "VX"] = speed;
+    window["p" + player + "VY"] = speed;
 
     //Adding default keycodes
     window["p" + player + "LeftKey"] = defaultKeyCodes[0][player - 1];
     window["p" + player + "RightKey"] = defaultKeyCodes[1][player - 1];
+}
+
+var setBaseSpeed = function () {
+    document.getElementById("speed").addEventListener("change", function () {
+        speed = event.srcElement.value;
+    });
 }
 
 //Setting random speeds for the players
@@ -102,9 +113,9 @@ var setRandSpeed = function (player) {
     //Updates the players speeds depending on the value of n
     if (n === -1 || n === 1) {
         window[player + "VX"] = 0;
-        window[player + "VY"] = n;
+        window[player + "VY"] = n * speed;
     } else if (n === 0 || n === 2) {
-        window[player + "VY"] = n - 1;
+        window[player + "VY"] = (n - 1) * speed;
         window[player + "VY"] = 0;
     }
 }
@@ -214,6 +225,7 @@ var confInit = function (e) {
         //Calling all the player initialization functions
         colors(i);
         names(i);
+        setBaseSpeed();
         vars(i);
         setRandSpeed(i);
     }
@@ -247,7 +259,7 @@ var drawPlayerWidget = function (ctx) {
     }
 
     //If they have, and the game has started, then draw the names.
-    if (allNamesAdded && gameStarted) {
+    if (allNamesAdded && gameStatus) {
         //Drawing player widget
         ctx.strokeStyle = "#FFFFFF";
         for (var i = 1; i < players + 1; i += 1) {
@@ -284,6 +296,13 @@ var drawPlayerWidget = function (ctx) {
 
 //Drawing the players
 var paintPlayers = function (ctx) {
+    function uniq(a) {
+        var seen = {};
+        return a.filter(function(item) {
+            return seen.hasOwnProperty(item) ? false : (seen[item] = true);
+        });
+    }
+
     for (var i = 1; i < players + 1; i += 1) {
         //If the hole timer hasn't reached zero
         if (holeTimer > 0) {
@@ -323,7 +342,7 @@ var paintPlayers = function (ctx) {
                 holeTimer = 350;
                 noHoleTimer = 75;
 
-                paintPlayers(bg_ctx);
+                paintPlayers(ctx);
             }
         }
     }
@@ -353,19 +372,15 @@ var drawPlayerCircle = function (ctx) {
     }
 }
 
-var timesRan = 0;
-
 var reset = function () {
     //Returns random X and Y-values in a range
     var randPos = function (axis) {
         return (Math.floor(Math.random() * ((axis - 50) - 50 + 1) + 50));
     }
 
-    timesRan += 1;
-    console.log(timesRan);
-
     //Clearing up from last game
     bg_ctx.clearRect(0, 0, dimX, dimY);
+    off_ctx1.clearRect(0, 0, dimX, dimY);
 
     for (var i = 1; i < players + 1; i += 1) {
         //Adding starting dimensions for the players
@@ -385,33 +400,41 @@ var colDetection = function () {
     for (var x = 1; x < players + 1; x += 1) {
         //Player with wall
         if (window["p" + x + "X"] >= dimX - 4 || window["p" + x + "X"] <= 4 || window["p" + x + "Y"] >= dimY - 4 || window["p" + x + "Y"] <= 4) {
-            reset();
+            finished();
         }
+        console.log(p1P);
 
         for (var y = 1; y < players + 1; y += 1) {
             for (var i = 0; i < window["p" + y + "P"][0].length; i += 1) {
                 //Player with self or other player
                 if (window["p" + x + "P"][0][i] === window["p" + y + "X"] && window["p" + x + "P"][1][i] === window["p" + y + "Y"]) {
-                    ranColDetection = true;
-                    reset();
+                    finished();
                 }
             }
         }
     }
-
 }
 
 //Updating the canvas
 var update = function () {
     //Painting the players
-    paintPlayers(bg_ctx);
+    paintPlayers(off_ctx1);
+    bg_ctx.drawImage(off_canv1, 0, 0);
 
-    //Clearing the circles
+    //Clearing the circles and labels
     fg_ctx.clearRect(0, 0, dimX, dimY);
-    drawPlayerCircle(fg_ctx);
+    off_ctx2.clearRect(0, 0, dimX, dimY);
+
+    //Drawing new circles and labels
+    drawPlayerCircle(off_ctx2);
+    fg_ctx.drawImage(off_canv2, 0, 0);
 
     //Checking for collisions
+    var t0 = performance.now();
     colDetection();
+    var t1 = performance.now()
+
+    console.log(t1 - t0);
 
     //Using requestAnimationFrame for much smoother gameplay
     mainLoop = requestAnimationFrame(update);
@@ -419,46 +442,50 @@ var update = function () {
 
 var keyDown = function (e) {
     //Start the game if the start button is pressed and the game isn't started already
-    if (e.keyCode === keyCodeStart && gameStarted === "false") {
+    if (e.keyCode === keyCodeStart && gameStatus === "false") {
         start();
     }
     //Resume the game if the start button is pressed and the game is paused
-    else if (e.keyCode === keyCodeStart && gameStarted === "menu") {
+    else if (e.keyCode === keyCodeStart && gameStatus === "menu") {
         resume();
+    }
+    //Start new game if current one was concluded
+    else if (e.keyCode === keyCodeStart && gameStatus === "finished") {
+        startOver();
     }
 
     //Pause the game if the menu button is pressed and the game is running
-    if (e.keyCode === keyCodeMenu && gameStarted === "true") {
+    if (e.keyCode === keyCodeMenu && (gameStatus === "true" || gameStatus === "finished")) {
         menu();
     }
 
     for (var i = 1; i < players + 1; i += 1) {
         if (e.keyCode === window["p" + i + "LeftKey"]) {
-            if (window["p" + i + "VX"] === 1 && window["p" + i + "VY"] === 0) {
+            if (window["p" + i + "VX"] === speed && window["p" + i + "VY"] === 0) {
                 window["p" + i + "VX"] = 0;
-                window["p" + i + "VY"] = -1;
-            } else if (window["p" + i + "VX"] === 0 && window["p" + i + "VY"] === 1) {
-                window["p" + i + "VX"] = 1;
+                window["p" + i + "VY"] = -speed;
+            } else if (window["p" + i + "VX"] === 0 && window["p" + i + "VY"] === speed) {
+                window["p" + i + "VX"] = speed;
                 window["p" + i + "VY"] = 0;
-            } else if (window["p" + i + "VX"] === -1 && window["p" + i + "VY"] === 0) {
+            } else if (window["p" + i + "VX"] === -speed && window["p" + i + "VY"] === 0) {
                 window["p" + i + "VX"] = 0;
-                window["p" + i + "VY"] = 1;
-            } else if (window["p" + i + "VX"] === 0 && window["p" + i + "VY"] === -1) {
-                window["p" + i + "VX"] = -1;
+                window["p" + i + "VY"] = speed;
+            } else if (window["p" + i + "VX"] === 0 && window["p" + i + "VY"] === -speed) {
+                window["p" + i + "VX"] = -speed;
                 window["p" + i + "VY"] = 0;
             }
         } else if (e.keyCode === window["p" + i + "RightKey"]) {
-            if (window["p" + i + "VX"] === 1 && window["p" + i + "VY"] === 0) {
+            if (window["p" + i + "VX"] === speed && window["p" + i + "VY"] === 0) {
                 window["p" + i + "VX"] = 0;
-                window["p" + i + "VY"] = 1;
-            } else if (window["p" + i + "VX"] === 0 && window["p" + i + "VY"] === 1) {
-                window["p" + i + "VX"] = -1;
+                window["p" + i + "VY"] = speed;
+            } else if (window["p" + i + "VX"] === 0 && window["p" + i + "VY"] === speed) {
+                window["p" + i + "VX"] = -speed;
                 window["p" + i + "VY"] = 0;
-            } else if (window["p" + i + "VX"] === -1 && window["p" + i + "VY"] === 0) {
+            } else if (window["p" + i + "VX"] === -speed && window["p" + i + "VY"] === 0) {
                 window["p" + i + "VX"] = 0;
-                window["p" + i + "VY"] = -1;
-            } else if (window["p" + i + "VX"] === 0 && window["p" + i + "VY"] === -1) {
-                window["p" + i + "VX"] = 1;
+                window["p" + i + "VY"] = -speed;
+            } else if (window["p" + i + "VX"] === 0 && window["p" + i + "VY"] === -speed) {
+                window["p" + i + "VX"] = speed;
                 window["p" + i + "VY"] = 0;
             }
         }
@@ -467,7 +494,7 @@ var keyDown = function (e) {
 
 //Runs when starting the game with the start button
 var start = function () {
-    gameStarted = "true";
+    gameStatus = "true";
 
     //Hiding the menu
     document.getElementById("menu").style.display = "none";
@@ -480,6 +507,8 @@ var start = function () {
     //Resizing secondary canvases to the size of the primary canvas
     init(fg_ctx);
     init(ffg_ctx);
+    init(off_ctx1);
+    init(off_ctx2);
 
     //Drawing the widget, resetting, and updating the canvas
     drawPlayerWidget(ffg_ctx);
@@ -489,7 +518,7 @@ var start = function () {
 
 //Runs when the menu button is pressed and the game is running
 var menu = function () {
-    gameStarted = "menu";
+    gameStatus = "menu";
 
     //Shows the menu
     document.getElementById("menu").style.display = "block";
@@ -505,7 +534,7 @@ var menu = function () {
 
 //Runs when the start button is pressed, the game is paused, and the game has already been started once
 var resume = function () {
-    gameStarted = "true";
+    gameStatus = "true";
 
     //Hiding the menu
     document.getElementById("menu").style.display = "none";
@@ -517,5 +546,28 @@ var resume = function () {
 
     //Drawing the widget and updating the canvas
     drawPlayerWidget(ffg_ctx);
+    update();
+}
+
+var finished = function () {
+    gameStatus = "finished";
+    for (var i = 1; i < players + 1; i += 1) {
+        window["p" + i + "VX"] = 0;
+        window["p" + i + "VY"] = 0;
+    }
+
+    cancelAnimationFrame(mainLoop);
+}
+
+var startOver = function () {
+    gameStatus = "true";
+
+    speed = 0.5;
+
+    for (var i = 1; i < players + 1; i += 1) {
+        vars(i);
+    }
+
+    reset();
     update();
 }
