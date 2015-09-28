@@ -24,6 +24,17 @@ body {
     margin-left: 20px;
 }
 
+.playerNumber * {
+	display: inline;
+    margin-left: 10px;
+    margin-top: 20px;
+}
+
+.playerNumber input {
+	width: 40px;
+    margin-left: 15px;
+}
+
 .row {
     display: block;
     margin-top: 10px;

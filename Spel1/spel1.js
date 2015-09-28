@@ -7,8 +7,8 @@ var bg_ctx = bg.getContext("2d"),
     fg_ctx = fg.getContext("2d"),
     ffg_ctx = ffg.getContext("2d");
 
-var mainLoop;
-var gameStarted = "false";
+
+var canvases = document.getElementsByClassName("canv");
 
 //Setting the canvas dimensions to the maximum available size within the window
 bg_ctx.canvas.width = window.innerWidth;
@@ -17,48 +17,6 @@ bg_ctx.canvas.height = window.innerHeight;
 //Setting the height and width of the canvas to variables
 var dimX = bg_ctx.canvas.width,
     dimY = bg_ctx.canvas.height;
-
-//Returns random hex color
-var randColor = function () {
-    return '#' + Math.floor(Math.random() * 16777215).toString(16);
-}
-
-//Adding event handlers for the keys
-document.getElementById("main").addEventListener("keydown", function () {
-    keyDown(event);
-});
-
-colorPicker1 = document.getElementById("colorPicker1");
-colorPicker2 = document.getElementById("colorPicker2");
-
-colorPicker1.value = randColor();
-colorPicker2.value = randColor();
-
-colorPicker1.addEventListener("change", function () {
-    p1C = event.srcElement.value;
-});
-colorPicker2.addEventListener("change", function () {
-    p2C = event.srcElement.value;
-});
-
-document.getElementById("name1").addEventListener("change", function () {
-    firstName = event.srcElement.value;
-    firstNameAdded = true;
-});
-document.getElementById("name2").addEventListener("change", function () {
-    secondName = event.srcElement.value;
-    secondNameAdded = true;
-});
-
-document.getElementById("p1LeftKey").innerHTML = "A";
-document.getElementById("p1RightKey").innerHTML = "D";
-document.getElementById("p2LeftKey").innerHTML = "J";
-document.getElementById("p2RightKey").innerHTML = "L";
-
-var keyHandler = function(e, player, direction) {
-    window[player + direction + "Key"] = event.keyCode;
-    document.getElementById(player + direction + "Key").innerHTML = String.fromCharCode(event.keyCode);
-}
 
 //Initializing secondary canvases
 var init = function (ctx) {
@@ -69,90 +27,71 @@ var init = function (ctx) {
 init(fg_ctx);
 init(ffg_ctx);
 
-var firstNameAdded = false;
-var secondNameAdded = false;
+var mainLoop;
+var players = 2;
+var gameStarted = "false";
 
-var firstName = "";
-var secondName = "";
+var defaultControls = ["A", "S", "J", "K", "V", "B", "U", "I", "R", "T"],
+    defaultKeyCodes = [[65, 74, 86, 85, 82], [83, 75, 66, 73, 84]];
 
-var drawPlayerWidget = function (ctx) {
-    if(firstNameAdded && secondNameAdded && gameStarted) {
-        //Drawing player widget
-        ctx.strokeStyle = "#FFFFFF";
-        ctx.strokeText(firstName + ":", 20, 30);
-        ctx.strokeText(secondName + ":", 20, 50);
-    }
-    else {
-        firstName = "Player 1";
-        secondName = "Player 2";
-
-        firstNameAdded = true;
-        secondNameAdded = true;
-
-        drawPlayerWidget(ffg_ctx);
-    }
-
-    ctx.beginPath();
-
-    ctx.lineWidth = 10;
-
-    ctx.moveTo(65, 27);
-    ctx.lineTo(100, 27);
-
-    ctx.strokeStyle = p1C;
-    ctx.stroke();
-
-    ctx.closePath();
-
-    ctx.beginPath();
-
-    ctx.lineWidth = 10;
-
-    ctx.moveTo(65, 47);
-    ctx.lineTo(100, 47);
-
-    ctx.strokeStyle = p2C;
-    ctx.stroke();
-
-    ctx.closePath();
-}
-
-//Returns random X and Y-values
-var randPos = function (axis) {
-    return (Math.floor(Math.random() * ((axis - 50) - 50 + 1) + 50));
-}
-
-var randNum = function (max, min) {
-    return (Math.floor(Math.random() * (max - min + 1)) + min);
-}
-
-//Adding starting dimensions for the players
-var p1X = 0,
-    p1Y = 0;
-var p2X = 0,
-    p2Y = 0;
-
-//Adding arrays for storing line areas
-var p1P = [[], []],
-    p2P = [[], []];
-
-//Adding speeds for the players
-var p1VX = 1,
-    p1VY = 1;
-var p2VX = 1,
-    p2VY = 1;
-
-var p1LeftKey = 65,
-    p1RightKey = 68;
-var p2LeftKey = 74,
-    p2RightKey = 76;
+var keyCodeStart = 32,
+    keyCodeMenu = 27;
 
 var holeTimer = -100,
     noHoleTimer = 75;
 
+var colors = function (player) {
+    //Returns random hex color
+    var randColor = function () {
+        return '#' + Math.floor(Math.random() * 16777215).toString(16);
+    }
+
+    window["colorPicker" + player] = document.getElementById("colorPicker" + player);
+    window["colorPicker" + player].value = randColor();
+
+    window["colorPicker" + player].addEventListener("change", function () {
+        window["p" + player + "C"] = event.srcElement.value;
+    });
+
+    //Adding colors for the players
+    window["p" + player + "C"] = document.getElementById("colorPicker" + player).value;
+}
+
+var names = function (player) {
+    window["name" + player] = "";
+    window["name" + player + "Added"] = false;
+
+    document.getElementById("name" + player).addEventListener("change", function () {
+        window["name" + player] = event.srcElement.value;
+        window["name" + player + "Added"] = true;
+    });
+}
+
+var vars = function (player) {
+    //Adding starting dimensions for the players
+    window["p" + player + "X"] = 0;
+    window["p" + player + "Y"] = 0;
+
+    //Adding arrays for storing line areas
+    window["p" + player + "P"] = [[], []];
+
+    //Adding speeds for the players
+    window["p" + player + "VX"] = 1;
+    window["p" + player + "VY"] = 1;
+
+    //Adding default keycodes
+    window["p" + player + "LeftKey"] = defaultKeyCodes[0][player - 1];
+    window["p" + player + "RightKey"] = defaultKeyCodes[1][player - 1];
+}
+
 //Setting random speeds for the players
 var setRandSpeed = function (player) {
+    var randNum = function (max, min) {
+        return (Math.floor(Math.random() * (max - min + 1)) + min);
+    }
+
     var n = randNum(-2, 2);
+
     if (n === -1 || n === 1) {
         window[player + "VX"] = 0;
         window[player + "VY"] = n;
@@ -162,138 +101,256 @@ var setRandSpeed = function (player) {
     }
 }
 
-//Adding colors for the players
-var p1C = document.getElementById("colorPicker1").value,
-    p2C = document.getElementById("colorPicker2").value;
+var keys = function () {
+    //Adding event handlers for the keys
+    document.getElementById("main").addEventListener("keydown", function () {
+        keyDown(event);
+    });
+
+    keyList = document.getElementsByClassName("keys");
+
+    for (var i = 0; i < keyList.length; i += 1) {
+        document.getElementById(keyList[i].id).innerHTML = defaultControls[i];
+    }
+}
+
+var confInit = function(e) {
+    var conf = document.getElementById("conf");
+
+    while (conf.firstChild) {
+        conf.removeChild(conf.firstChild);
+    }
+    if (parseInt(e) > 0) {
+        players = parseInt(e);
+    }
+    for (var i = 1; i < players + 1; i += 1) {
+        var row = document.createElement("DIV");
+        row.setAttribute("class", "row");
+
+        var para = document.createElement("P");
+        var bold = document.createElement("B");
+        var para1Text = document.createTextNode("Player " + i + ":");
+        bold.appendChild(para1Text);
+        para.appendChild(bold);
+
+        var paraName = document.createElement("P");
+        var paraNameText = document.createTextNode("Name = ");
+        paraName.appendChild(paraNameText);
+
+        var name = document.createElement("INPUT");
+        name.setAttribute("type", "text");
+        name.setAttribute("id", "name" + i);
+        name.setAttribute("value", "Player " + i);
+
+        var paraColor = document.createElement("P");
+        var paraColorText = document.createTextNode("Color = ");
+        paraColor.appendChild(paraColorText);
+
+        var color = document.createElement("INPUT");
+        color.setAttribute("type", "color");
+        color.setAttribute("id", "colorPicker" + i);
+
+        var leftPara = document.createElement("P");
+        var leftParaText = document.createTextNode("Left key = ");
+        leftPara.appendChild(leftParaText);
+
+        var leftDiv = document.createElement("DIV");
+        leftDiv.setAttribute("id", "p" + i + "LeftKey");
+        leftDiv.setAttribute("class", "keys");
+        leftDiv.setAttribute("tabindex", "0");
+        leftDiv.setAttribute("onKeyDown", "keyHandler(event, 'p" + i + "', 'Left')");
+
+        var rightPara = document.createElement("P");
+        var rightParaText = document.createTextNode("Right key = ");
+        rightPara.appendChild(rightParaText);
+
+        var rightDiv = document.createElement("DIV");
+        rightDiv.setAttribute("id", "p" + i + "RightKey");
+        rightDiv.setAttribute("class", "keys");
+        rightDiv.setAttribute("tabindex", "0");
+        rightDiv.setAttribute("onKeyDown", "keyHandler(event, 'p" + i + "', 'Right')");
+
+        row.appendChild(para);
+        row.appendChild(paraName);
+        row.appendChild(name);
+        row.appendChild(paraColor);
+        row.appendChild(color);
+        row.appendChild(leftPara);
+        row.appendChild(leftDiv);
+        row.appendChild(rightPara);
+        row.appendChild(rightDiv);
+
+        conf.appendChild(row);
+
+        colors(i);
+        names(i);
+        vars(i);
+        setRandSpeed(i);
+    }
+
+    keys();
+}
+
+confInit();
+
+document.getElementById("players").addEventListener("change", function () {
+    confInit(event.srcElement.value);
+});
+
+var keyHandler = function(e, player, direction) {
+    window[player + direction + "Key"] = event.keyCode;
+    document.getElementById(player + direction + "Key").innerHTML = String.fromCharCode(event.keyCode);
+}
+
+var drawPlayerWidget = function (ctx) {
+    var allNamesAdded = true;
+
+    for (var i = 1; i < players + 1; i += 1) {
+        if (window["name" + i + "Added"] === false) {
+            allNamesAdded = false;
+        }
+    }
+    if(allNamesAdded && gameStarted) {
+        //Drawing player widget
+        ctx.strokeStyle = "#FFFFFF";
+        for (var i = 1; i < players + 1; i += 1) {
+            ctx.strokeText(window["name" + i] + ":", 20, 10 + 20 * i);
+        }
+    }
+    else {
+        for (var i = 1; i < players + 1; i += 1) {
+            window["name" + i] = "Player " + i;
+            window["name" + i + "Added"] = true;
+        }
+
+        drawPlayerWidget(ffg_ctx);
+    }
+
+    for (var i = 1; i < players + 1; i += 1) {
+        ctx.beginPath();
+
+        ctx.lineWidth = 10;
+
+        ctx.moveTo(65, 7 + 20 * i);
+        ctx.lineTo(100, 7 + 20 * i);
+
+        ctx.strokeStyle = window["p" + i + "C"];
+        ctx.stroke();
+
+        ctx.closePath();
+    }
+}
 
 var paintPlayers = function (ctx) {
-    if (holeTimer > 0) {
-        //Drawing player 1
-        ctx.beginPath();
-        ctx.arc(p1X, p1Y, 5, 0, Math.PI * 2);
+    for (var i = 1; i < players + 1; i += 1) {
+        if (holeTimer > 0) {
+            //Drawing player
+            ctx.beginPath();
+            ctx.arc(window["p" + i + "X"], window["p" + i + "Y"], 5, 0, Math.PI * 2);
 
-        ctx.strokeStyle = p1C;
-        ctx.stroke();
-        ctx.closePath();
+            ctx.strokeStyle = window["p" + i + "C"];
+            ctx.stroke();
+            ctx.closePath();
 
-        //Drawing player 2
-        ctx.beginPath();
-        ctx.arc(p2X, p2Y, 5, 0, Math.PI * 2);
+            //Adding player coords to array
+            window["p" + i + "P"][0].push(window["p" + i + "X"]);
+            window["p" + i + "P"][1].push(window["p" + i + "Y"]);
 
-        ctx.strokeStyle = p2C;
-        ctx.stroke();
-        ctx.closePath();
+            //Moving player
+            window["p" + i + "X"] += window["p" + i + "VX"];
+            window["p" + i + "Y"] += window["p" + i + "VY"];
 
-        //Adding player 1 coords to array
-        p1P[0].push(p1X);
-        p1P[1].push(p1Y);
-
-        //Moving player 1
-        p1X += p1VX;
-        p1Y += p1VY;
-
-        //Adding player 2 coords to array
-        p2P[0].push(p2X);
-        p2P[1].push(p2Y);
-
-        //Moving player 2
-        p2X += p2VX;
-        p2Y += p2VY;
-
-        holeTimer -= 1;
-    } else {
-        if (noHoleTimer > 0) {
-            //Moving player 1
-            p1X += p1VX;
-            p1Y += p1VY;
-
-            //Moving player 2
-            p2X += p2VX;
-            p2Y += p2VY;
-
-            noHoleTimer -= 1;
+            holeTimer -= 1 / players;
         } else {
-            holeTimer = 350;
-            noHoleTimer = 75;
+            if (noHoleTimer > 0) {
+                //Moving player
+                window["p" + i + "X"] += window["p" + i + "VX"];
+                window["p" + i + "Y"] += window["p" + i + "VY"];
 
-            paintPlayers(bg_ctx);
+                noHoleTimer -= 1 / players;
+            } else {
+                holeTimer = 350;
+                noHoleTimer = 75;
+
+                paintPlayers(bg_ctx);
+            }
         }
     }
 }
 
 //Drawing the yellow circle on the players position
 var drawPlayerCircle = function (ctx) {
-    //Setting color to yellow
-    ctx.fillStyle = "yellow";
+    for (var i = 1; i < players + 1; i += 1) {
+        //Drawing player circle
+        ctx.beginPath();
 
-    //Drawing player circle
-    ctx.beginPath();
+        //Setting color to yellow
+        ctx.fillStyle = "yellow";
+        ctx.arc(window["p" + i + "X"], window["p" + i + "Y"], 5, 0, Math.PI * 2);
+        ctx.fill();
 
-    ctx.arc(p1X, p1Y, 5, 0, Math.PI * 2);
-    ctx.fillStyle = "#FFFFFF";
-    ctx.lineWidth = 1;
-    ctx.fillText(firstName, p1X - ctx.measureText(firstName).width / 2, p1Y - 10);
-    ctx.fill();
+        ctx.closePath();
 
-    ctx.closePath();
+        //Drawing player label
+        ctx.beginPath();
 
-    ctx.beginPath();
+        ctx.fillStyle = "#FFFFFF";
+        ctx.lineWidth = 1;
+        ctx.fillText(window["name" + i], window["p" + i + "X"] - ctx.measureText(window["name" + i]).width / 2, window["p" + i + "Y"] - 10);
+        ctx.fill();
 
-    ctx.arc(p2X, p2Y, 5, 0, Math.PI * 2);
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillText(secondName, p2X - ctx.measureText(secondName).width / 2, p2Y - 10);
-    ctx.fill();
-
-    ctx.closePath();
+        ctx.closePath();
+    }
 }
 
+var timesRan = 0;
+
 var reset = function () {
+    //Returns random X and Y-values
+    var randPos = function (axis) {
+        return (Math.floor(Math.random() * ((axis - 50) - 50 + 1) + 50));
+    }
+
+    timesRan += 1;
+    console.log(timesRan);
+
     //Clearing up from last game
     bg_ctx.clearRect(0, 0, dimX, dimY);
 
-    //Adding starting dimensions for the players
-    p1X = randPos(dimX), p1Y = randPos(dimY);
-    p2X = randPos(dimX), p2Y = randPos(dimY);
+    for (var i = 1; i < players + 1; i += 1) {
+        //Adding starting dimensions for the players
+        window["p" + i + "X"] = randPos(dimX);
+        window["p" + i + "Y"] = randPos(dimY);
 
-    setRandSpeed("p1");
-    setRandSpeed("p2");
+        setRandSpeed("p" + i);
 
-    //Adding arrays for storing line areas
-    p1P = [[p1X], [p1Y]], p2P = [[p2X], [p2Y]];
+        //Adding arrays for storing line areas
+        window["p" + i + "P"] = [[window["p" + i + "X"]], [window["p" + i + "Y"]]];
+    }
 }
-
 //Checking for collisions
 var colDetection = function () {
-    for (var i = 0; i < p1P[0].length; i++) {
-        //Player 2 with player 1
-        if (p1P[0][i] === p2X && p1P[1][i] === p2Y) {
+    for (var x = 1; x < players + 1; x += 1) {
+        //Player with wall
+        if (window["p" + x + "X"] >= dimX - 4 || window["p" + x + "X"] <= 4 || window["p" + x + "Y"] >= dimY - 4 || window["p" + x + "Y"] <= 4) {
             reset();
         }
-        //Player 1 with player 2
-        if (p2P[0][i] === p1X && p2P[1][i] === p1Y) {
-            reset();
-        }
-        //Player 1 with self
-        if (p1P[0][i] === p1X && p1P[1][i] === p1Y) {
-            reset();
-        }
-        //Player 2 with self
-        if (p2P[0][i] === p2X && p2P[1][i] === p2Y) {
-            reset();
+
+        for (var y = 1; y < players + 1; y += 1) {
+            for (var i = 0; i < window["p" + y + "P"][0].length; i += 1) {
+                //Player with self or other player
+                if (window["p" + x + "P"][0][i] === window["p" + y + "X"] && window["p" + x + "P"][1][i] === window["p" + y + "Y"]) {
+                    ranColDetection = true;
+                    reset();
+                }
+            }
         }
     }
-    //Player 1 with wall
-    if (p1X >= dimX - 4 || p1X <= 4 || p1Y >= dimY - 4 || p1Y <= 4) {
-        reset();
-    }
-    //Player 2 with wall
-    if (p2X >= dimX - 4 || p2X <= 4 || p2Y >= dimY - 4 || p2Y <= 4) {
-        reset();
-    }
+
 }
 
 //Updating the canvas
-var update = function (colReturn) {
+var update = function () {
     paintPlayers(bg_ctx);
 
     fg_ctx.clearRect(0, 0, dimX, dimY);
@@ -305,73 +362,52 @@ var update = function (colReturn) {
 }
 
 var keyDown = function (e) {
-    if (e.keyCode === 32 && gameStarted === "false") {
+    if (e.keyCode === keyCodeStart && gameStarted === "false") {
         start();
-    } else if (e.keyCode === 32 && gameStarted === "menu") {
+    } else if (e.keyCode === keyCodeStart && gameStarted === "menu") {
         resume();
     }
 
-    if (e.keyCode === 27 && gameStarted === "true") {
+    if (e.keyCode === keyCodeMenu && gameStarted === "true") {
         menu();
     }
 
-    if (e.keyCode === p1LeftKey) {
-        if (p1VX === 1 && p1VY === 0) {
-            p1VX = 0;
-            p1VY = -1;
-        } else if (p1VX === 0 && p1VY === 1) {
-            p1VX = 1;
-            p1VY = 0;
-        } else if (p1VX === -1 && p1VY === 0) {
-            p1VX = 0;
-            p1VY = 1;
-        } else if (p1VX === 0 && p1VY === -1) {
-            p1VX = -1;
-            p1VY = 0;
+    for (var i = 1; i < players + 1; i += 1) {
+        if (e.keyCode === window["p" + i + "LeftKey"]) {
+            if (window["p" + i + "VX"] === 1 && window["p" + i + "VY"] === 0) {
+                window["p" + i + "VX"] = 0;
+                window["p" + i + "VY"] = -1;
+            }
+            else if (window["p" + i + "VX"] === 0 && window["p" + i + "VY"] === 1) {
+                window["p" + i + "VX"] = 1;
+                window["p" + i + "VY"] = 0;
+            }
+            else if (window["p" + i + "VX"] === -1 && window["p" + i + "VY"] === 0) {
+                window["p" + i + "VX"] = 0;
+                window["p" + i + "VY"] = 1;
+            }
+            else if (window["p" + i + "VX"] === 0 && window["p" + i + "VY"] === -1) {
+                window["p" + i + "VX"] = -1;
+                window["p" + i + "VY"] = 0;
+            }
         }
-    } else if (e.keyCode === p1RightKey) {
-        if (p1VX === 1 && p1VY === 0) {
-            p1VX = 0;
-            p1VY = 1;
-        } else if (p1VX === 0 && p1VY === 1) {
-            p1VX = -1;
-            p1VY = 0;
-        } else if (p1VX === -1 && p1VY === 0) {
-            p1VX = 0;
-            p1VY = -1;
-        } else if (p1VX === 0 && p1VY === -1) {
-            p1VX = 1;
-            p1VY = 0;
-        }
-    }
-
-    if (e.keyCode === p2LeftKey) {
-        if (p2VX === 1 && p2VY === 0) {
-            p2VX = 0;
-            p2VY = -1;
-        } else if (p2VX === 0 && p2VY === 1) {
-            p2VX = 1;
-            p2VY = 0;
-        } else if (p2VX === -1 && p2VY === 0) {
-            p2VX = 0;
-            p2VY = 1;
-        } else if (p2VX === 0 && p2VY === -1) {
-            p2VX = -1;
-            p2VY = 0;
-        }
-    } else if (e.keyCode === p2RightKey) {
-        if (p2VX === 1 && p2VY === 0) {
-            p2VX = 0;
-            p2VY = 1;
-        } else if (p2VX === 0 && p2VY === 1) {
-            p2VX = -1;
-            p2VY = 0;
-        } else if (p2VX === -1 && p2VY === 0) {
-            p2VX = 0;
-            p2VY = -1;
-        } else if (p2VX === 0 && p2VY === -1) {
-            p2VX = 1;
-            p2VY = 0;
+        else if (e.keyCode === window["p" + i + "RightKey"]) {
+            if (window["p" + i + "VX"] === 1 && window["p" + i + "VY"] === 0) {
+                window["p" + i + "VX"] = 0;
+                window["p" + i + "VY"] = 1;
+            }
+            else if (window["p" + i + "VX"] === 0 && window["p" + i + "VY"] === 1) {
+                window["p" + i + "VX"] = -1;
+                window["p" + i + "VY"] = 0;
+            }
+            else if (window["p" + i + "VX"] === -1 && window["p" + i + "VY"] === 0) {
+                window["p" + i + "VX"] = 0;
+                window["p" + i + "VY"] = -1;
+            }
+            else if (window["p" + i + "VX"] === 0 && window["p" + i + "VY"] === -1) {
+                window["p" + i + "VX"] = 1;
+                window["p" + i + "VY"] = 0;
+            }
         }
     }
 }
@@ -381,7 +417,6 @@ var start = function () {
 
     document.getElementById("menu").style.display = "none";
 
-    var canvases = document.getElementsByClassName("canv");
     for (var i = 0; i < canvases.length; i += 1) {
         canvases[i].style.display = "block";
     }
@@ -396,10 +431,8 @@ var menu = function () {
 
     document.getElementById("menu").style.display = "block";
 
-    var canvases = document.getElementsByClassName("canv");
     for (var i = 0; i < canvases.length; i += 1) {
         canvases[i].style.display = "none";
-        //canvases[i].style.backgroundColor = "grey";
     }
 
     cancelAnimationFrame(mainLoop);
@@ -410,11 +443,10 @@ var resume = function () {
 
     document.getElementById("menu").style.display = "none";
 
-    var canvases = document.getElementsByClassName("canv");
     for (var i = 0; i < canvases.length; i += 1) {
         canvases[i].style.display = "block";
-        //canvases[i].style.backgroundColor = "black";
     }
 
+    drawPlayerWidget(ffg_ctx);
     update();
 }

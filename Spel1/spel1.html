@@ -9,31 +9,11 @@
 <body id="main">
     <div id="menu">
         <h1>Configuration</h1>
-        <div id="conf">
-            <div class="row">
-                <p><b>Player 1:</b></p>
-                <p>Name = </p>
-                <input type="text" id="name1" value="Player 1" />
-                <p>Color = </p>
-                <input type="color" id="colorPicker1" />
-                <p>Left key = </p>
-                <div id="p1LeftKey" class="keys" tabindex="0" onkeydown="keyHandler(event, 'p1', 'Left')"></div>
-                <p>Right key = </p>
-                <div id="p1RightKey" class="keys" tabindex="0" onkeydown="keyHandler(event, 'p1', 'Right')"></div>
-            </div>
-            <div class="row">
-                <p><b>Player 2:</b></p>
-                <p>Name = </p>
-                <input type="text" id="name2" value="Player 2" />
-                <p>Color = </p>
-                <input type="color" id="colorPicker2" />
-                <p>Left key = </p>
-                <div id="p2LeftKey" class="keys" tabindex="0" onkeydown="keyHandler(event, 'p2', 'Left')"></div>
-                <p>Right key = </p>
-                <div id="p2RightKey" class="keys" tabindex="0" onkeydown="keyHandler(event, 'p2', 'Right')"></div>
-            </div>
-            <h2>Press Space to start!</h2>
+        <div class="playerNumber">
+            <p><b>Players: </b></p>
+            <input type="number" id="players" value="2" min="1" autocomplete="off" />
         </div>
+        <div id="conf"></div>
     </div>
 
     <canvas id="bg" class="canv"></canvas>
