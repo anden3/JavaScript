@@ -402,7 +402,6 @@ var colDetection = function () {
         if (window["p" + x + "X"] >= dimX - 4 || window["p" + x + "X"] <= 4 || window["p" + x + "Y"] >= dimY - 4 || window["p" + x + "Y"] <= 4) {
             finished();
         }
-        console.log(p1P);
 
         for (var y = 1; y < players + 1; y += 1) {
             for (var i = 0; i < window["p" + y + "P"][0].length; i += 1) {
