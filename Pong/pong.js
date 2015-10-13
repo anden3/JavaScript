@@ -19,14 +19,10 @@ var ballX = 0, ballY = 0;
 var ballVX = 0, ballVY = 0;
 
 //Y-values and speed for paddles
-var p1Y = dimX/2 - dimX/16, p1VY = 0;
-var p2Y = 0;
+var pY = 300, pVY = 5;
 
 //Initial score
-var p1S = 0, p2S = 0;
-
-var remotePlayers = [],
-    localPlayer;
+var pS = 0;
 
 //Saving sounds to variables
 var soundWall = new Audio("http://cs.au.dk/~dsound/DigitalAudio.dir/Greenfoot/Pong.dir/sounds_ping_pong_8bit/ping_pong_8bit_plop.wav");
@@ -35,12 +31,40 @@ var soundMiss = new Audio("http://cs.au.dk/~dsound/DigitalAudio.dir/Greenfoot/Po
 
 socket = io.connect("http://localhost:4004");
 
+var id,
+    id_set = false;
+
 socket.on("connect", onSocketConnected);
 socket.on("disconnect", onSocketDisconnect);
+socket.on('new pos', function (msg) {
+    pX = msg.x;
+    pY = msg.y;
+    ctx.clearRect(pX - 100, pY - 100, 300, 300);
+    ctx.fillStyle = "white";
+    ctx.fillRect(pX, pY, 10, dimX/8);
+});
+
+socket.on('players ready', function (msg) {
+    var p1X = msg.players[0].x,
+        p1Y = msg.players[0].y,
+        p2X = msg.players[1].x,
+        p2Y = msg.players[1].y;
+
+    ctx.fillStyle = "white";
+    ctx.fillRect(p1X, p1Y, dimY/144, dimX/8);
+    ctx.fillRect(p2X, p2Y, dimY/144, dimX/8);
+});
+
+socket.on('player id', function (msg) {
+    if (id_set === false) {
+        id = msg;
+        id_set = true;
+    }
+});
 
 function onSocketConnected() {
     console.log("Connected to socket server");
-    socket.emit("new player", {y: p1Y});
+    socket.emit('new player', {y: pY});
 };
 
 function onSocketDisconnect() {
@@ -61,13 +85,13 @@ var paintBall = function() {
 
     //Right edge col-detection
     if(ballX >= dimY - dimY/160) {
-        p1S += 1;
+        pS += 1;
         //soundMiss.play();
         resetBall();
     }
     //Left edge col-detection
     if(ballX <= dimY/288) {
-        p2S += 1;
+        //p2S += 1;
         //soundMiss.play();
         resetBall();
     }
@@ -77,21 +101,24 @@ var paintBall = function() {
         ballVY *= -1;
     }
     //Paddle 1 col-detection
-    if(Math.abs(ballX - dimY/72) <= dimY/144 && Math.abs(ballY - (p1Y + dimX/16)) <= dimX/16) {
+    if(Math.abs(ballX - dimY/72) <= dimY/144 && Math.abs(ballY - (pY + dimX/16)) <= dimX/16) {
         //soundPaddle.play();
         ballVX *= -1;
     }
+
+    /*
     //Paddle 2 col-detection
     if(Math.abs(ballX - (dimY - dimY/72)) <= dimY/144 && Math.abs(ballY - (p2Y + dimX/16)) <= dimX/16) {
         //soundPaddle.play();
         ballVX *= -1;
     }
+    */
 }
 
 var paintRect = function(x, y) {
     //Drawing the paddles
-    ctx.fillRect(dimY/96, y, dimY/144, dimX/8);
-    ctx.fillRect(dimY - (dimY/57.6), p2Y, dimY/144, dimX/8);
+    //ctx.fillRect(15, y, dimY/144, dimX/8);
+    //ctx.fillRect(dimY - (dimY/57.6), p2Y, dimY/144, dimX/8);
 
     //Moving the left paddle
     //p1Y += p1VY;
@@ -113,27 +140,20 @@ var paintRect = function(x, y) {
 var paintText = function() {
     //Drawing the score displays
     ctx.font = dimX/8 + "px monospace";
-    var textLength = ctx.measureText(p1S).width;
-    ctx.fillText(p1S, dimY/2 - (textLength + dimY/36), dimX/6);
-    ctx.fillText(p2S, dimY/2 + dimY/36, dimX/6);
+    var textLength = ctx.measureText(pS).width;
+    ctx.fillText(pS, dimY/2 - (textLength + dimY/36), dimX/6);
+    //ctx.fillText(p2S, dimY/2 + dimY/36, dimX/6);
 }
 
 var update = function() {
     //Clearing the canvas
-    ctx.clearRect(0, 0, dimY, dimX);
+    //ctx.clearRect(0, 0, dimY, dimX);
 
     //Calling all drawing functions
-    paintRect(dimY/96, 0);
+    //paintBall();
+    //paintText();
 
-    if (remotePlayers.length > 0) {
-        paintRect(dimY - (dimY/57.6), 0);
-    }
-
-    paintRect();
-    paintBall();
-    paintText();
-
-    requestAnimationFrame(update);
+    //requestAnimationFrame(update);
 }
 
 var updateDimensions = function() {
@@ -159,12 +179,14 @@ var resetBall = function() {
     //ballVY = posOrNeg * (Math.random() * ((dimX/160) - (dimX/800)) + dimX/800);
     ballVX = posOrNeg;
     ballVY = posOrNeg;
-    update();
+    //update();
 }
 
 var keyDown = function(e) {
     //Checking if 'W' or 'UpArrow' is being pressed
     if(e.keyCode === 87 || e.keyCode === 38) {
+        socket.emit('player move', {y: pY - pVY, id: id});
+        /*
         //Only moves the paddle if it's not at the top already (kinda...)
         if(p1Y <= 0) {
             p1VY = 0;
@@ -173,9 +195,12 @@ var keyDown = function(e) {
             //Moves the paddle upwards
             p1VY = -(dimX/160);
         }
+        */
     }
     //Checking if 'S' or 'DownArrow' is being pressed
     if(e.keyCode === 83 || e.keyCode === 40) {
+        socket.emit('player move', {y: pY + pVY, id: id});
+        /*
         //Only moves the paddle if it's not at the bottom already
         if(p1Y >= dimX - dimX/8) {
             p1VY = 0;
@@ -184,13 +209,14 @@ var keyDown = function(e) {
             //Moves the paddle downwards
             p1VY = dimX/160;
         }
+        */
     }
 }
 
 var keyUp = function(e) {
     //Checking if one of the movement keys have been released, and if so, stops the paddle.
     if(e.keyCode === 87 || e.keyCode === 83 || e.keyCode === 38 || e.keyCode === 40) {
-        p1VY = 0;
+        //p1VY = 0;
     }
 }
 
