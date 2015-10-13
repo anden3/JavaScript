@@ -1,9 +1,10 @@
-var gameport = process.env.PORT || 4004;
-var verbose = true;
-var UUID = require('node-uuid');
-var app = require('express')();
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
+var gameport = process.env.PORT || 4004,
+    verbose = true,
+
+    UUID = require('node-uuid'),
+    app = require('express')(),
+    http = require('http').Server(app),
+    io = require('socket.io')(http);
 
 app.get('/', function(req, res){
 	res.sendFile(__dirname + '/index.html');

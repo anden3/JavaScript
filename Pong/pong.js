@@ -9,7 +9,6 @@ ctx.canvas.height = window.innerHeight;
 //Adding event handlers for the keys and mouse
 document.getElementById("main").addEventListener("keydown", function(){ keyDown(event); });
 document.getElementById("main").addEventListener("keyup", function(){ keyUp(event); });
-document.getElementById("main").addEventListener("mousemove", function(){ mouseMove(event); });
 window.addEventListener("resize", function(){ updateDimensions(); });
 
 //Setting the height and width of the canvas to variables
@@ -26,10 +25,27 @@ var p2Y = 0;
 //Initial score
 var p1S = 0, p2S = 0;
 
+var remotePlayers = [],
+    localPlayer;
+
 //Saving sounds to variables
 var soundWall = new Audio("http://cs.au.dk/~dsound/DigitalAudio.dir/Greenfoot/Pong.dir/sounds_ping_pong_8bit/ping_pong_8bit_plop.wav");
 var soundPaddle = new Audio("http://cs.au.dk/~dsound/DigitalAudio.dir/Greenfoot/Pong.dir/sounds_ping_pong_8bit/ping_pong_8bit_beeep.wav");
 var soundMiss = new Audio("http://cs.au.dk/~dsound/DigitalAudio.dir/Greenfoot/Pong.dir/sounds_ping_pong_8bit/ping_pong_8bit_peeeeeep.wav");
+
+socket = io.connect("http://localhost:4004");
+
+socket.on("connect", onSocketConnected);
+socket.on("disconnect", onSocketDisconnect);
+
+function onSocketConnected() {
+    console.log("Connected to socket server");
+    socket.emit("new player", {y: p1Y});
+};
+
+function onSocketDisconnect() {
+    console.log("Disconnected from socket server");
+};
 
 var paintBall = function() {
     //Drawing the ball
@@ -46,39 +62,39 @@ var paintBall = function() {
     //Right edge col-detection
     if(ballX >= dimY - dimY/160) {
         p1S += 1;
-        soundMiss.play();
+        //soundMiss.play();
         resetBall();
     }
     //Left edge col-detection
     if(ballX <= dimY/288) {
         p2S += 1;
-        soundMiss.play();
+        //soundMiss.play();
         resetBall();
     }
     //Bottom and top edge col-detection
     if(ballY >= dimX - dimX/160 || ballY <= dimX/160) {
-        soundWall.play();
+        //soundWall.play();
         ballVY *= -1;
     }
     //Paddle 1 col-detection
     if(Math.abs(ballX - dimY/72) <= dimY/144 && Math.abs(ballY - (p1Y + dimX/16)) <= dimX/16) {
-        soundPaddle.play();
+        //soundPaddle.play();
         ballVX *= -1;
     }
     //Paddle 2 col-detection
     if(Math.abs(ballX - (dimY - dimY/72)) <= dimY/144 && Math.abs(ballY - (p2Y + dimX/16)) <= dimX/16) {
-        soundPaddle.play();
+        //soundPaddle.play();
         ballVX *= -1;
     }
 }
 
-var paintRect = function() {
+var paintRect = function(x, y) {
     //Drawing the paddles
-    ctx.fillRect(dimY/96, p1Y, dimY/144, dimX/8);
+    ctx.fillRect(dimY/96, y, dimY/144, dimX/8);
     ctx.fillRect(dimY - (dimY/57.6), p2Y, dimY/144, dimX/8);
 
     //Moving the left paddle
-    p1Y += p1VY;
+    //p1Y += p1VY;
 
     //Drawing the center line
     ctx.beginPath();
@@ -107,9 +123,17 @@ var update = function() {
     ctx.clearRect(0, 0, dimY, dimX);
 
     //Calling all drawing functions
+    paintRect(dimY/96, 0);
+
+    if (remotePlayers.length > 0) {
+        paintRect(dimY - (dimY/57.6), 0);
+    }
+
     paintRect();
     paintBall();
     paintText();
+
+    requestAnimationFrame(update);
 }
 
 var updateDimensions = function() {
@@ -131,8 +155,10 @@ var resetBall = function() {
     var posOrNeg = Math.random() < 0.5 ? -1 : 1;
 
     //Setting ball speeds to random values between 1 and 5, and multiplies it by either 1 or -1
-    ballVX = posOrNeg * (Math.random() * ((dimY/288) - (dimY/1440)) + (dimY/1440));
-    ballVY = posOrNeg * (Math.random() * ((dimX/160) - (dimX/800)) + dimX/800);
+    //ballVX = posOrNeg * (Math.random() * ((dimY/288) - (dimY/1440)) + (dimY/1440));
+    //ballVY = posOrNeg * (Math.random() * ((dimX/160) - (dimX/800)) + dimX/800);
+    ballVX = posOrNeg;
+    ballVY = posOrNeg;
     update();
 }
 
@@ -168,13 +194,8 @@ var keyUp = function(e) {
     }
 }
 
-var mouseMove = function(e) {
-    //Saves the mouses Y-coordinate to p2Y; the value is decreased by half of the paddle height so the middle of the paddle is stuck to the cursor, rather than       //the top
-    p2Y = e.clientY - dimX/16;
-}
-
 //Setting the initial position and speed of the ball
 resetBall();
 
 //Calls the update function sixty times per second
-window.setInterval(update, 50 / 3);
+update();
