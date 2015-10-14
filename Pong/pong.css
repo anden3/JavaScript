@@ -15,3 +15,8 @@ html, body {
 	z-index: 1;
     position: absolute;
 }
+
+#txt_canv {
+    z-index: 2;
+    position: absolute;
+}

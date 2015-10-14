@@ -5,6 +5,9 @@ var pdl_ctx = paddle_canvas.getContext("2d");
 var ball_canvas = document.getElementById("bal_canv");
 var bal_ctx = ball_canvas.getContext("2d");
 
+var text_canvas = document.getElementById("txt_canv");
+var txt_ctx = text_canvas.getContext("2d");
+
 //Setting the canvas dimensions to the maximum avaliable size within the window
 pdl_ctx.canvas.width = window.innerWidth;
 pdl_ctx.canvas.height = window.innerHeight;
@@ -12,10 +15,11 @@ pdl_ctx.canvas.height = window.innerHeight;
 bal_ctx.canvas.width = window.innerWidth;
 bal_ctx.canvas.height = window.innerHeight;
 
+txt_ctx.canvas.width = window.innerWidth;
+txt_ctx.canvas.height = window.innerHeight;
+
 //Adding event handlers for the keys and mouse
 document.getElementById("main").addEventListener("keydown", function(){ keyDown(event); });
-//document.getElementById("main").addEventListener("keyup", function(){ keyUp(event); });
-//window.addEventListener("resize", function(){ updateDimensions(); });
 
 //Setting the height and width of the canvas to variables
 var dimX = pdl_ctx.canvas.height, dimY = pdl_ctx.canvas.width;
@@ -25,15 +29,7 @@ var ballX = 0, ballY = 0;
 var ballVX = 0, ballVY = 0;
 
 //Y-values and speed for paddles
-var pY = 300, pVY = 5;
-
-//Initial score
-var pS = 0;
-
-//Saving sounds to variables
-var soundWall = new Audio("http://cs.au.dk/~dsound/DigitalAudio.dir/Greenfoot/Pong.dir/sounds_ping_pong_8bit/ping_pong_8bit_plop.wav");
-var soundPaddle = new Audio("http://cs.au.dk/~dsound/DigitalAudio.dir/Greenfoot/Pong.dir/sounds_ping_pong_8bit/ping_pong_8bit_beeep.wav");
-var soundMiss = new Audio("http://cs.au.dk/~dsound/DigitalAudio.dir/Greenfoot/Pong.dir/sounds_ping_pong_8bit/ping_pong_8bit_peeeeeep.wav");
+var pY = 300, pVY = 20;
 
 socket = io.connect("http://macs-air.lan:4004");
 
@@ -62,11 +58,6 @@ socket.on("disconnect", function () {
 socket.on('players ready', function (msg) {
     players = msg.object;
 
-    var p1X = msg.object[0].x,
-        p1Y = msg.object[0].y,
-        p2X = msg.object[1].x,
-        p2Y = msg.object[1].y;
-
     if (!scaleSet) {
         if (players[0].id === id) {
             var resX = players[0].resX;
@@ -77,18 +68,30 @@ socket.on('players ready', function (msg) {
         }
 
         pdl_ctx.scale(resY/p2resY, resX/p2resX);
-        //bal_ctx.scale(resY/p2resY, resX/p2resX);
+        bal_ctx.scale(resY/p2resY, resX/p2resX);
 
         scaleSet = true;
     }
 
+    pdl_ctx.clearRect(0, 0, dimY, dimX);
+
     pdl_ctx.fillStyle = "white";
-    pdl_ctx.fillRect(p1X, p1Y, dimY/144, dimX/8);
-    pdl_ctx.fillRect(p2X, p2Y, dimY/144, dimX/8);
+    pdl_ctx.fillRect(players[0].x, players[0].y, dimY/144, dimX/8);
+    pdl_ctx.fillRect(players[1].x, players[1].y, dimY/144, dimX/8);
 
-    resetBall();
+    socket.emit('new ball', {resX: dimX, resY: dimY});
+});
 
-    update();
+socket.on('display score', function (msg) {
+    txt_ctx.clearRect(0, 0, dimY, dimX);
+
+    //Drawing the score displays
+    txt_ctx.font = dimX/8 + "px monospace";
+    var textLength = txt_ctx.measureText(msg[0].score).width;
+
+    txt_ctx.fillStyle = "white";
+    txt_ctx.fillText(msg[0].score, dimY/2 - (textLength + dimY/36), dimX/6);
+    txt_ctx.fillText(msg[1].score, dimY/2 + dimY/36, dimX/6);
 });
 
 socket.on('new pos', function (msg) {
@@ -101,131 +104,20 @@ socket.on('new pos', function (msg) {
     pdl_ctx.fillRect(players[1].x, players[1].y, dimY/144, dimX/8);
 });
 
-var paintBall = function(ctx) {
-    //ctx.clearRect(ballX - 10, ballY - 10, ballX + 10, ballY + 10);
-    ctx.clearRect(0, 0, dimY, dimX);
+socket.on('spawn ball', function (msg) {
+    paintBall(bal_ctx, msg);
+});
+
+socket.on('paint ball', function (msg) {
+    bal_ctx.clearRect(0, 0, dimY, dimX);
 
     //Drawing the ball
-    ctx.beginPath();
-        ctx.arc(ballX, ballY, dimX/160, 0, 2 * Math.PI);
-        ctx.fillStyle = "#FFFFFF";
-        ctx.fill();
-    ctx.closePath();
-
-    //Moving the ball
-    ballX += ballVX;
-    ballY += ballVY;
-
-    //Right edge col-detection
-    if(ballX >= dimY - dimY/160) {
-        //p1S += 1;
-        //soundMiss.play();
-        resetBall();
-    }
-    //Left edge col-detection
-    if(ballX <= dimY/288) {
-        //p2S += 1;
-        //soundMiss.play();
-        resetBall();
-    }
-    //Bottom and top edge col-detection
-    if(ballY >= dimX - dimX/160 || ballY <= dimX/160) {
-        //soundWall.play();
-        ballVY *= -1;
-    }
-    //Paddle 1 col-detection
-    if(Math.abs(ballX - dimY/72) <= dimY/144 && Math.abs(ballY - (players[0].y + dimX/16)) <= dimX/16) {
-        //soundPaddle.play();
-        ballVX *= -1;
-    }
-
-    //Paddle 2 col-detection
-    if(Math.abs(ballX - (dimY - dimY/72)) <= dimY/144 && Math.abs(ballY - (players[1].y + dimX/16)) <= dimX/16) {
-        //soundPaddle.play();
-        ballVX *= -1;
-    }
-}
-
-/*
-var paintRect = function() {
-    if (players.length === 2) {
-        var p1X = players[0].x,
-            p1Y = players[0].y,
-
-            p2X = players[1].x,
-            p2Y = players[1].y;
-
-        //Drawing the paddles
-        ctx.fillStyle = "white";
-        ctx.fillRect(players[0].x, players[0].y, dimY/144, dimX/8);
-        ctx.fillRect(players[1].x, players[1].y, dimY/144, dimX/8);
-    }
-
-    //Moving the left paddle
-    p1Y += p1VY;
-
-    //Drawing the center line
-    ctx.beginPath();
-        //Setting the style of the line
-        ctx.strokeStyle = "#FFFFFF";
-        ctx.lineWidth = dimX/40;
-        ctx.setLineDash([dimX/40]);
-
-        //Drawing the line
-        ctx.moveTo(dimY/2, -3);
-        ctx.lineTo(dimY/2, dimX);
-        ctx.stroke();
-    ctx.closePath();
-}
-
-var paintText = function() {
-    //Drawing the score displays
-    ctx.font = dimX/8 + "px monospace";
-    var textLength = ctx.measureText(pS).width;
-    ctx.fillText(pS, dimY/2 - (textLength + dimY/36), dimX/6);
-    //ctx.fillText(p2S, dimY/2 + dimY/36, dimX/6);
-}
-*/
-
-var update = function() {
-    //Clearing the canvas
-    //ctx.clearRect(0, 0, dimY, dimX);
-
-    //Calling all drawing functions
-    paintBall(bal_ctx);
-    //paintRect();
-    //paintText();
-
-    requestAnimationFrame(update);
-}
-
-/*
-var updateDimensions = function() {
-    //Setting the canvas dimensions to the maximum available size within the window
-    ctx.canvas.width = window.innerWidth;
-    ctx.canvas.height = window.innerHeight;
-
-    //Setting the height and width of the canvas to variables
-    dimX = ctx.canvas.height;
-    dimY = ctx.canvas.width;
-}
-*/
-
-var resetBall = function() {
-    //Setting ball spawn location to the center of the canvas
-    ballX = dimY/2 - dimY/288;
-    ballY = dimX/2 - dimX/160;
-
-    //Saving a value of either -1 or 1 to a variable
-    var posOrNeg = Math.random() < 0.5 ? -1 : 1;
-
-    //Setting ball speeds to random values between 1 and 5, and multiplies it by either 1 or -1
-    ballVX = posOrNeg * (Math.random() * ((dimY/288) - (dimY/1440)) + (dimY/1440));
-    ballVY = posOrNeg * (Math.random() * ((dimX/160) - (dimX/800)) + dimX/800);
-    //ballVX = posOrNeg;
-    //ballVY = posOrNeg;
-    //update();
-}
+    bal_ctx.beginPath();
+        bal_ctx.arc(msg.x, msg.y, dimX/160, 0, 2 * Math.PI);
+        bal_ctx.fillStyle = "#FFFFFF";
+        bal_ctx.fill();
+    bal_ctx.closePath();
+});
 
 var keyDown = function(e) {
     //Checking if 'W' or 'UpArrow' is being pressed
@@ -253,18 +145,3 @@ var keyDown = function(e) {
         socket.emit('player move', {y: pY + pVY, id: id});
     }
 }
-
-/*
-var keyUp = function(e) {
-    //Checking if one of the movement keys have been released, and if so, stops the paddle.
-    if(e.keyCode === 87 || e.keyCode === 83 || e.keyCode === 38 || e.keyCode === 40) {
-        p1VY = 0;
-    }
-}
-*/
-
-//Setting the initial position and speed of the ball
-//resetBall();
-
-//Calls the update function sixty times per second
-//update();
