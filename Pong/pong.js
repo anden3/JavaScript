@@ -29,46 +29,52 @@ var soundWall = new Audio("http://cs.au.dk/~dsound/DigitalAudio.dir/Greenfoot/Po
 var soundPaddle = new Audio("http://cs.au.dk/~dsound/DigitalAudio.dir/Greenfoot/Pong.dir/sounds_ping_pong_8bit/ping_pong_8bit_beeep.wav");
 var soundMiss = new Audio("http://cs.au.dk/~dsound/DigitalAudio.dir/Greenfoot/Pong.dir/sounds_ping_pong_8bit/ping_pong_8bit_peeeeeep.wav");
 
-socket = io.connect("http://localhost:4004");
+socket = io.connect("http://macs-air.lan:4004");
 
 var id,
-    id_set = false;
+    id_set = false,
+    players = [];
 
-socket.on("connect", onSocketConnected);
+socket.on("onconnected", function (msg) {
+    console.log("Connected to socket server");
+
+    if (id_set === false) {
+        id = msg.id;
+        id_set = true;
+    }
+
+    socket.emit('new player', {y: pY, dimX: dimX, dimY: dimY});
+});
+
 socket.on("disconnect", onSocketDisconnect);
+
 socket.on('new pos', function (msg) {
-    pX = msg.x;
-    pY = msg.y;
-    ctx.clearRect(pX - 100, pY - 100, 300, 300);
-    ctx.fillStyle = "white";
-    ctx.fillRect(pX, pY, 10, dimX/8);
+    players = msg.players;
+
+    ctx.clearRect(0, 0, dimY, dimX);
+
+    //ctx.fillStyle = "white";
+    //ctx.fillRect(players[0].x, players[0].y, dimY/144, dimX/8);
+    //ctx.fillRect(players[1].x, players[1].y, dimY/144, dimX/8);
 });
 
 socket.on('players ready', function (msg) {
-    var p1X = msg.players[0].x,
-        p1Y = msg.players[0].y,
-        p2X = msg.players[1].x,
-        p2Y = msg.players[1].y;
+    var p1X = msg.object[0].x,
+        p1Y = msg.object[0].y,
+        p2X = msg.object[1].x,
+        p2Y = msg.object[1].y;
 
-    ctx.fillStyle = "white";
-    ctx.fillRect(p1X, p1Y, dimY/144, dimX/8);
-    ctx.fillRect(p2X, p2Y, dimY/144, dimX/8);
+    players = msg.object;
+
+    //ctx.fillStyle = "white";
+    //ctx.fillRect(p1X, p1Y, dimY/144, dimX/8);
+    //ctx.fillRect(p2X, p2Y, dimY/144, dimX/8);
 });
-
-socket.on('player id', function (msg) {
-    if (id_set === false) {
-        id = msg;
-        id_set = true;
-    }
-});
-
-function onSocketConnected() {
-    console.log("Connected to socket server");
-    socket.emit('new player', {y: pY});
-};
 
 function onSocketDisconnect() {
     console.log("Disconnected from socket server");
+    id = "";
+    id_set = false;
 };
 
 var paintBall = function() {
@@ -101,27 +107,35 @@ var paintBall = function() {
         ballVY *= -1;
     }
     //Paddle 1 col-detection
-    if(Math.abs(ballX - dimY/72) <= dimY/144 && Math.abs(ballY - (pY + dimX/16)) <= dimX/16) {
+    if(Math.abs(ballX - dimY/72) <= dimY/144 && Math.abs(ballY - (players[0].y + dimX/16)) <= dimX/16) {
         //soundPaddle.play();
         ballVX *= -1;
+    }
+
+    //Paddle 2 col-detection
+    if(Math.abs(ballX - (dimY - dimY/72)) <= dimY/144 && Math.abs(ballY - (players[1].y + dimX/16)) <= dimX/16) {
+        //soundPaddle.play();
+        ballVX *= -1;
+    }
+}
+
+var paintRect = function() {
+    if (players.length === 2) {
+        var p1X = players[0].x,
+            p1Y = players[0].y,
+
+            p2X = players[1].x,
+            p2Y = players[1].y;
+
+        //Drawing the paddles
+        ctx.fillStyle = "white";
+        ctx.fillRect(players[0].x, players[0].y, dimY/144, dimX/8);
+        ctx.fillRect(players[1].x, players[1].y, dimY/144, dimX/8);
     }
 
     /*
-    //Paddle 2 col-detection
-    if(Math.abs(ballX - (dimY - dimY/72)) <= dimY/144 && Math.abs(ballY - (p2Y + dimX/16)) <= dimX/16) {
-        //soundPaddle.play();
-        ballVX *= -1;
-    }
-    */
-}
-
-var paintRect = function(x, y) {
-    //Drawing the paddles
-    //ctx.fillRect(15, y, dimY/144, dimX/8);
-    //ctx.fillRect(dimY - (dimY/57.6), p2Y, dimY/144, dimX/8);
-
     //Moving the left paddle
-    //p1Y += p1VY;
+    p1Y += p1VY;
 
     //Drawing the center line
     ctx.beginPath();
@@ -135,8 +149,10 @@ var paintRect = function(x, y) {
         ctx.lineTo(dimY/2, dimX);
         ctx.stroke();
     ctx.closePath();
+    */
 }
 
+/*
 var paintText = function() {
     //Drawing the score displays
     ctx.font = dimX/8 + "px monospace";
@@ -144,6 +160,7 @@ var paintText = function() {
     ctx.fillText(pS, dimY/2 - (textLength + dimY/36), dimX/6);
     //ctx.fillText(p2S, dimY/2 + dimY/36, dimX/6);
 }
+*/
 
 var update = function() {
     //Clearing the canvas
@@ -151,9 +168,10 @@ var update = function() {
 
     //Calling all drawing functions
     //paintBall();
+    paintRect();
     //paintText();
 
-    //requestAnimationFrame(update);
+    requestAnimationFrame(update);
 }
 
 var updateDimensions = function() {
@@ -185,31 +203,27 @@ var resetBall = function() {
 var keyDown = function(e) {
     //Checking if 'W' or 'UpArrow' is being pressed
     if(e.keyCode === 87 || e.keyCode === 38) {
-        socket.emit('player move', {y: pY - pVY, id: id});
-        /*
-        //Only moves the paddle if it's not at the top already (kinda...)
-        if(p1Y <= 0) {
-            p1VY = 0;
+        if (players[0].id === id) {
+            var pY = players[0].y;
         }
+
         else {
-            //Moves the paddle upwards
-            p1VY = -(dimX/160);
+            var pY = players[1].y;
         }
-        */
+
+        socket.emit('player move', {y: pY - pVY, id: id});
     }
     //Checking if 'S' or 'DownArrow' is being pressed
     if(e.keyCode === 83 || e.keyCode === 40) {
-        socket.emit('player move', {y: pY + pVY, id: id});
-        /*
-        //Only moves the paddle if it's not at the bottom already
-        if(p1Y >= dimX - dimX/8) {
-            p1VY = 0;
+        if (players[0].id === id) {
+            var pY = players[0].y;
         }
+
         else {
-            //Moves the paddle downwards
-            p1VY = dimX/160;
+            var pY = players[1].y;
         }
-        */
+
+        socket.emit('player move', {y: pY + pVY, id: id});
     }
 }
 
