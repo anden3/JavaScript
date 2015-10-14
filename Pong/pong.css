@@ -5,6 +5,13 @@ html, body {
     overflow: hidden;
 }
 
-#canv {
+#pdl_canv {
     background-color: black;
+    position: absolute;
+    z-index: 0;
+}
+
+#bal_canv {
+	z-index: 1;
+    position: absolute;
 }

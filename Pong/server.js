@@ -51,16 +51,16 @@ io.on('connection', function(client) {
             dimY = msg.dimY;
 
         if (players.length === 0) {
-            players.push({x: Math.round(dimY/96), y: y_pos, id: client.userid, player: 1});
+            players.push({x: Math.round(dimY/96), y: y_pos, id: client.userid, player: 1, resX: dimX, resY: dimY});
         }
 
         else if (players.length === 1 && players[0].player === 1) {
-            players.push({x: Math.round(dimY - (dimY / 57.6)), y: y_pos, id: client.userid, player: 2});
+            players.push({x: Math.round(dimY - (dimY / 57.6)), y: y_pos, id: client.userid, player: 2, resX: dimX, resY: dimY});
             io.emit('players ready', {object: players});
         }
 
         else if (players.length === 1 && players[0].player === 2) {
-            players.unshift({x: Math.round(dimY/96), y: y_pos, id: client.userid, player: 1});
+            players.unshift({x: Math.round(dimY/96), y: y_pos, id: client.userid, player: 1, resX: dimX, resY: dimY});
             io.emit('players ready', {object: players});
         }
     });

@@ -1,18 +1,24 @@
 //Saving the canvas and its content to variables
-var canvas = document.getElementById("canv");
-var ctx = canvas.getContext("2d");
+var paddle_canvas = document.getElementById("pdl_canv");
+var pdl_ctx = paddle_canvas.getContext("2d");
+
+var ball_canvas = document.getElementById("bal_canv");
+var bal_ctx = ball_canvas.getContext("2d");
 
 //Setting the canvas dimensions to the maximum avaliable size within the window
-ctx.canvas.width = window.innerWidth;
-ctx.canvas.height = window.innerHeight;
+pdl_ctx.canvas.width = window.innerWidth;
+pdl_ctx.canvas.height = window.innerHeight;
+
+bal_ctx.canvas.width = window.innerWidth;
+bal_ctx.canvas.height = window.innerHeight;
 
 //Adding event handlers for the keys and mouse
 document.getElementById("main").addEventListener("keydown", function(){ keyDown(event); });
-document.getElementById("main").addEventListener("keyup", function(){ keyUp(event); });
-window.addEventListener("resize", function(){ updateDimensions(); });
+//document.getElementById("main").addEventListener("keyup", function(){ keyUp(event); });
+//window.addEventListener("resize", function(){ updateDimensions(); });
 
 //Setting the height and width of the canvas to variables
-var dimX = ctx.canvas.height, dimY = ctx.canvas.width;
+var dimX = pdl_ctx.canvas.height, dimY = pdl_ctx.canvas.width;
 
 //Defining variables for position and speed of ball
 var ballX = 0, ballY = 0;
@@ -33,6 +39,7 @@ socket = io.connect("http://macs-air.lan:4004");
 
 var id,
     id_set = false,
+    scaleSet = false,
     players = [];
 
 socket.on("onconnected", function (msg) {
@@ -46,38 +53,58 @@ socket.on("onconnected", function (msg) {
     socket.emit('new player', {y: pY, dimX: dimX, dimY: dimY});
 });
 
-socket.on("disconnect", onSocketDisconnect);
-
-socket.on('new pos', function (msg) {
-    players = msg.players;
-
-    ctx.clearRect(0, 0, dimY, dimX);
-
-    //ctx.fillStyle = "white";
-    //ctx.fillRect(players[0].x, players[0].y, dimY/144, dimX/8);
-    //ctx.fillRect(players[1].x, players[1].y, dimY/144, dimX/8);
+socket.on("disconnect", function () {
+    console.log("Disconnected from socket server");
+    id = "";
+    id_set = false;
 });
 
 socket.on('players ready', function (msg) {
+    players = msg.object;
+
     var p1X = msg.object[0].x,
         p1Y = msg.object[0].y,
         p2X = msg.object[1].x,
         p2Y = msg.object[1].y;
 
-    players = msg.object;
+    if (!scaleSet) {
+        if (players[0].id === id) {
+            var resX = players[0].resX;
+            var resY = players[0].resY;
 
-    //ctx.fillStyle = "white";
-    //ctx.fillRect(p1X, p1Y, dimY/144, dimX/8);
-    //ctx.fillRect(p2X, p2Y, dimY/144, dimX/8);
+            var p2resX = players[1].resX;
+            var p2resY = players[1].resY;
+        }
+
+        pdl_ctx.scale(resY/p2resY, resX/p2resX);
+        //bal_ctx.scale(resY/p2resY, resX/p2resX);
+
+        scaleSet = true;
+    }
+
+    pdl_ctx.fillStyle = "white";
+    pdl_ctx.fillRect(p1X, p1Y, dimY/144, dimX/8);
+    pdl_ctx.fillRect(p2X, p2Y, dimY/144, dimX/8);
+
+    resetBall();
+
+    update();
 });
 
-function onSocketDisconnect() {
-    console.log("Disconnected from socket server");
-    id = "";
-    id_set = false;
-};
+socket.on('new pos', function (msg) {
+    players = msg.players;
 
-var paintBall = function() {
+    pdl_ctx.clearRect(0, 0, dimY, dimX);
+
+    pdl_ctx.fillStyle = "white";
+    pdl_ctx.fillRect(players[0].x, players[0].y, dimY/144, dimX/8);
+    pdl_ctx.fillRect(players[1].x, players[1].y, dimY/144, dimX/8);
+});
+
+var paintBall = function(ctx) {
+    //ctx.clearRect(ballX - 10, ballY - 10, ballX + 10, ballY + 10);
+    ctx.clearRect(0, 0, dimY, dimX);
+
     //Drawing the ball
     ctx.beginPath();
         ctx.arc(ballX, ballY, dimX/160, 0, 2 * Math.PI);
@@ -91,7 +118,7 @@ var paintBall = function() {
 
     //Right edge col-detection
     if(ballX >= dimY - dimY/160) {
-        pS += 1;
+        //p1S += 1;
         //soundMiss.play();
         resetBall();
     }
@@ -119,6 +146,7 @@ var paintBall = function() {
     }
 }
 
+/*
 var paintRect = function() {
     if (players.length === 2) {
         var p1X = players[0].x,
@@ -133,7 +161,6 @@ var paintRect = function() {
         ctx.fillRect(players[1].x, players[1].y, dimY/144, dimX/8);
     }
 
-    /*
     //Moving the left paddle
     p1Y += p1VY;
 
@@ -149,10 +176,8 @@ var paintRect = function() {
         ctx.lineTo(dimY/2, dimX);
         ctx.stroke();
     ctx.closePath();
-    */
 }
 
-/*
 var paintText = function() {
     //Drawing the score displays
     ctx.font = dimX/8 + "px monospace";
@@ -167,13 +192,14 @@ var update = function() {
     //ctx.clearRect(0, 0, dimY, dimX);
 
     //Calling all drawing functions
-    //paintBall();
-    paintRect();
+    paintBall(bal_ctx);
+    //paintRect();
     //paintText();
 
     requestAnimationFrame(update);
 }
 
+/*
 var updateDimensions = function() {
     //Setting the canvas dimensions to the maximum available size within the window
     ctx.canvas.width = window.innerWidth;
@@ -183,6 +209,7 @@ var updateDimensions = function() {
     dimX = ctx.canvas.height;
     dimY = ctx.canvas.width;
 }
+*/
 
 var resetBall = function() {
     //Setting ball spawn location to the center of the canvas
@@ -193,10 +220,10 @@ var resetBall = function() {
     var posOrNeg = Math.random() < 0.5 ? -1 : 1;
 
     //Setting ball speeds to random values between 1 and 5, and multiplies it by either 1 or -1
-    //ballVX = posOrNeg * (Math.random() * ((dimY/288) - (dimY/1440)) + (dimY/1440));
-    //ballVY = posOrNeg * (Math.random() * ((dimX/160) - (dimX/800)) + dimX/800);
-    ballVX = posOrNeg;
-    ballVY = posOrNeg;
+    ballVX = posOrNeg * (Math.random() * ((dimY/288) - (dimY/1440)) + (dimY/1440));
+    ballVY = posOrNeg * (Math.random() * ((dimX/160) - (dimX/800)) + dimX/800);
+    //ballVX = posOrNeg;
+    //ballVY = posOrNeg;
     //update();
 }
 
@@ -227,15 +254,17 @@ var keyDown = function(e) {
     }
 }
 
+/*
 var keyUp = function(e) {
     //Checking if one of the movement keys have been released, and if so, stops the paddle.
     if(e.keyCode === 87 || e.keyCode === 83 || e.keyCode === 38 || e.keyCode === 40) {
-        //p1VY = 0;
+        p1VY = 0;
     }
 }
+*/
 
 //Setting the initial position and speed of the ball
-resetBall();
+//resetBall();
 
 //Calls the update function sixty times per second
-update();
+//update();
