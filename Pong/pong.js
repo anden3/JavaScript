@@ -31,7 +31,7 @@ var ballVX = 0, ballVY = 0;
 //Y-values and speed for paddles
 var pY = 300, pVY = 20;
 
-socket = io.connect("http://macs-air.lan:4004");
+socket = io.connect("http://localhost:4004");
 
 var id,
     id_set = false,
@@ -97,7 +97,7 @@ socket.on('display score', function (msg) {
 socket.on('new pos', function (msg) {
     players = msg.players;
 
-    pdl_ctx.clearRect(0, 0, dimY, dimX);
+    pdl_ctx.clearRect(0, 0, 2000, 2000);
 
     pdl_ctx.fillStyle = "white";
     pdl_ctx.fillRect(players[0].x, players[0].y, dimY/144, dimX/8);
@@ -108,16 +108,34 @@ socket.on('spawn ball', function (msg) {
     paintBall(bal_ctx, msg);
 });
 
-socket.on('paint ball', function (msg) {
+socket.on('change ball', function (msg) {
+    if (typeof ballLoop !== "undefined") {
+        clearInterval(ballLoop);
+    }
+
+    ballX = msg.X;
+    ballY = msg.Y;
+    ballVX = msg.VX;
+    ballVY = msg.VY;
+
+    ballLoop = setInterval(function () {
+        paintBall();
+    }, 50 / 3);
+});
+
+var paintBall = function () {
     bal_ctx.clearRect(0, 0, dimY, dimX);
+
+    ballX += ballVX;
+    ballY += ballVY;
 
     //Drawing the ball
     bal_ctx.beginPath();
-        bal_ctx.arc(msg.x, msg.y, dimX/160, 0, 2 * Math.PI);
+        bal_ctx.arc(ballX, ballY, dimX/160, 0, 2 * Math.PI);
         bal_ctx.fillStyle = "#FFFFFF";
         bal_ctx.fill();
     bal_ctx.closePath();
-});
+}
 
 var keyDown = function(e) {
     //Checking if 'W' or 'UpArrow' is being pressed

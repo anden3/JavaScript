@@ -101,6 +101,10 @@ var updatePos = function () {
 }
 
 var resetBall = function (msg) {
+    if (typeof colLoop !== "undefined") {
+        clearInterval(colLoop);
+    }
+
     //Saving a value of either -1 or 1 to a variable
     var posOrNeg = Math.random() < 0.5 ? -1 : 1;
 
@@ -116,49 +120,65 @@ var resetBall = function (msg) {
     ballVX = posOrNeg * (Math.random() * (2 - 1) + 1);
     ballVY = posOrNeg * (Math.random() * (2 - 1) + 1);
 
-    paintBall(dimX, dimY);
+    paintBall(dimX, dimY, true);
 
-    ballLoop = setInterval(paintBall, 50 / 3);
+    colLoop = setInterval(function () {
+        paintBall(dimX, dimY, false);
+    }, 50 / 3);
 }
 
-var paintBall = function (resX, resY) {
+var paintBall = function (resX, resY, reset) {
     if (typeof resX !== "undefined") {
         ballResX = resX;
         ballResY = resY;
     }
 
+    var ballChanged = false;
+
+    if (reset) {
+        ballChanged = true;
+    }
+
     //Right edge col-detection
-    if(ballX >= ballResY - ballResY/160) {
+    if(ballX >= ballResY - ballResY/160 && Math.abs(ballY - (players[1].y + ballResX/16)) > ballResX/16) {
         players[0].score += 1;
         io.emit('display score', players);
-        clearInterval(ballLoop);
         resetBall();
     }
     //Left edge col-detection
-    if(ballX <= ballResY/288) {
+    if(ballX <= ballResY/288 && Math.abs(ballY - (players[0].y + ballResX/16)) > ballResX/16) {
         players[1].score += 1;
         io.emit('display score', players);
-        clearInterval(ballLoop);
         resetBall();
     }
     //Bottom and top edge col-detection
     if(ballY >= ballResX - ballResX/160 || ballY <= ballResX/160) {
         ballVY *= -1;
+        ballChanged = true;
     }
     //Paddle 1 col-detection
     if(Math.abs(ballX - ballResY/72) <= ballResY/144 && Math.abs(ballY - (players[0].y + ballResX/16)) <= ballResX/16) {
         ballVX *= -1;
+        ballChanged = true;
     }
     //Paddle 2 col-detection
     if(Math.abs(ballX - (ballResY - ballResY/72)) <= ballResY/144 && Math.abs(ballY - (players[1].y + ballResX/16)) <= ballResX/16) {
         ballVX *= -1;
+        ballChanged = true;
     }
 
-    //Moving the ball
     ballX += ballVX;
     ballY += ballVY;
 
-    io.emit('paint ball', {x: ballX, y: ballY});
+    if (ballChanged) {
+        io.emit('change ball', {X: ballX, Y: ballY, VX: ballVX, VY: ballVY});
+    }
+
+    //Moving the ball
+    //ballX += ballVX;
+    //ballY += ballVY;
+
+    //io.emit('paint ball', {x: ballX, y: ballY});
 }
 
 http.listen(gameport, function () {
