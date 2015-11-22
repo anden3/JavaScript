@@ -31,7 +31,7 @@ var ballVX = 0, ballVY = 0;
 //Y-values and speed for paddles
 var pY = 300, pVY = 20;
 
-socket = io.connect("http://localhost:4004");
+socket = io.connect("http://macs-Air:4004");
 
 var id,
     id_set = false,

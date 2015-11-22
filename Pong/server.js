@@ -173,12 +173,6 @@ var paintBall = function (resX, resY, reset) {
     if (ballChanged) {
         io.emit('change ball', {X: ballX, Y: ballY, VX: ballVX, VY: ballVY});
     }
-
-    //Moving the ball
-    //ballX += ballVX;
-    //ballY += ballVY;
-
-    //io.emit('paint ball', {x: ballX, y: ballY});
 }
 
 http.listen(gameport, function () {
