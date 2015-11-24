@@ -4,8 +4,8 @@ var map_ctx = map_canvas.getContext("2d");
 var mapHeight = 500;
 var mapWidth = 500;
 
-var scalingX = 10;
-var scalingY = 10;
+var scalingX = 1;
+var scalingY = 1;
 
 map_ctx.canvas.width = mapHeight * scalingX;
 map_ctx.canvas.height = mapWidth * scalingY;
@@ -48,6 +48,51 @@ var spliceMap = function (mapSplice) {
     return arr;
 };
 
+var sumOctave = function (iterations, x, y, persistance, scale) {
+    var maxAmp = 0;
+    var amp = 1;
+    var freq = scale;
+    var currentNoise = 0;
+
+    for (var i = 0; i < iterations; i++) {
+        currentNoise += noise.simplex2(x * freq, y * freq);
+        maxAmp += amp;
+        amp *= persistance;
+        freq *= 2;
+    }
+
+    currentNoise /= maxAmp;
+
+    return currentNoise;
+}
+
+var normalize = function (arr, dim, high) {
+    if (dim === 2) {
+        var tempArray = [];
+
+        for (var x = 0; x < arr.length; x++) {
+            tempArray.push(Math.max.apply(Math, arr[x]));
+        }
+
+        var ratio = Math.max.apply(Math, tempArray) / high;
+
+        for (var x = 0; x < arr.length; x++) {
+            for (var y = 0; y < arr[x].length; y++) {
+                arr[x][y] = Math.abs(arr[x][y] / ratio);
+            }
+        }
+    }
+    else if (dim === 1) {
+        var ratio = Math.max.apply(Math, arr) / high;
+
+        for (var x = 0; x < arr.length; x++) {
+            arr[x] = Math.abs(arr[x] / ratio);
+        }
+    }
+
+    return arr;
+}
+
 var fillMap = function () {
     window.seedValue = Math.random();
     noise.seed(seedValue);
@@ -69,13 +114,16 @@ var fillMap = function () {
     }
 
     var mapIter = 0;
+    var scale = 1;
 
     for (var x = 0; x < mapWidth; x++) {
         map.push([]);
         for (var y = 0; y < mapHeight; y++) {
-            map[x].push(Math.abs(noise.simplex2(x / 100, y / 100)));
+            map[x].push(sumOctave(5, x, y, 0.8, 0.001));
         }
     }
+
+    map = normalize(map, 2, 1);
 
     while (map.length >= 10) {
         var split1D = map.splice(0, 10);
@@ -102,7 +150,17 @@ var drawRegion = function (region, indexX, indexY) {
 
     for (var x = 0; x < region.length; x++) {
         for (var y = 0; y < region[x].length; y++) {
-            map_ctx.fillStyle = float2color(region[x][y]);
+            //map_ctx.fillStyle = float2color(region[x][y]);
+
+            if (region[x][y] < 0.33) {
+                map_ctx.fillStyle = "#aa7243";
+            }
+            else if (region[x][y] < 0.66) {
+                map_ctx.fillStyle = "green";
+            }
+            else {
+                map_ctx.fillStyle = "blue";
+            }
 
             var cellWidth = Math.ceil(mapWidth * scalingX / regionMap.length / region.length);
             var cellHeight = Math.ceil(mapHeight * scalingY / regionMap[indexX].length / region[x].length);
@@ -116,17 +174,26 @@ var drawRegion = function (region, indexX, indexY) {
 };
 
 var updateMap = function () {
-    map_ctx.clearRect(0, 0, mapHeight * scalingX, mapWidth * scalingY);
+    map_ctx.clearRect(0, 0, mapWidth * scalingX, mapHeight * scalingY);
 
     var activeRegionsStartX = Math.floor(scrollOffsets()[0] / regionMap.length / 2);
-    var activeRegionsEndX = Math.ceil(activeRegionsStartX + window.innerWidth / regionMap.length / 2);
+    var activeRegionsEndX = Math.ceil(activeRegionsStartX + window.innerWidth / regionMap[0].length / 2);
 
     var activeRegionsStartY = Math.floor(scrollOffsets()[1] / regionMap[0].length / 2);
-    var activeRegionsEndY = Math.ceil(activeRegionsStartY + window.innerHeight / regionMap[0].length / 2);
+    var activeRegionsEndY = Math.ceil(activeRegionsStartY + window.innerHeight / regionMap.length / 2);
 
-    for (var rX = activeRegionsStartX; rX < activeRegionsEndX; rX++) {
-        for (var rY = activeRegionsStartY; rY < activeRegionsEndY; rY++) {
-            drawRegion(window["region_" + regionMap[rX][rY]], rX, rY);
+    if (window.innerWidth < mapWidth * scalingX) {
+        for (var rX = activeRegionsStartX; rX < activeRegionsEndX; rX++) {
+            for (var rY = activeRegionsStartY; rY < activeRegionsEndY; rY++) {
+                drawRegion(window["region_" + regionMap[rX][rY]], rX, rY);
+            }
+        }
+    }
+    else {
+        for (var rX = 0; rX < regionMap.length; rX++) {
+            for (var rY = 0; rY < regionMap[0].length; rY++) {
+                drawRegion(window["region_" + regionMap[rX][rY]], rX, rY);
+            }
         }
     }
 }
