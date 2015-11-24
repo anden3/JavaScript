@@ -28,17 +28,27 @@ char_ctx.canvas.height = mapWidth * scalingY;
 
 var map = [];
 var regionMap = [];
+var worldMap = [];
 
-var float2color = function (percentage) {
-    var color_part_dec = 255 * percentage;
-    var color_part_hex = Number(parseInt(color_part_dec, 10)).toString(16);
+var worldIndex = {};
+var currentWorld = 0;
 
-    if (color_part_hex.length < 2) {
-        color_part_hex = "0" + color_part_hex;
+Object.size = function (obj) {
+    var size = 0, key;
+    for (key in obj) {
+        if (obj.hasOwnProperty(key)) size++;
     }
-
-    return "#" + color_part_hex + color_part_hex + color_part_hex;
+    return size;
 };
+
+Object.prototype.getKeyByValue = function (value) {
+    for (var prop in this) {
+        if (this.hasOwnProperty(prop)) {
+             if (this[prop] === value)
+                 return prop;
+        }
+    }
+}
 
 var scrollOffsets = function () {
     var doc = document.documentElement;
@@ -109,9 +119,172 @@ var normalize = function (arr, dim, high) {
     return arr;
 }
 
-var fillMap = function () {
-    window.seedValue = Math.random();
-    noise.seed(seedValue);
+var init = function () {
+    worldIndex[1] = Math.random();
+    currentWorld = 1;
+    worldMap.push([1]);
+
+    loadMap(worldIndex[1]);
+
+    eventListeners();
+    drawChar();
+}
+
+var loadWorld = function (dir) {
+    var newSeed = Math.random();
+    var newIndex = Object.size(worldIndex) + 1;
+
+    for (var row = 0; row < worldMap.length; row++) {
+        if (worldMap[row].indexOf(currentWorld) > -1) {
+            var prevMapRow = row;
+            var prevMapCol = worldMap[row].indexOf(currentWorld);
+            break;
+        }
+    }
+
+    if (dir === "left") {
+        charX = mapWidth * scalingX - charStep * 2;
+
+        if (worldMap[prevMapRow].indexOf(currentWorld) === 0) {
+            worldMap[prevMapRow].unshift(newIndex);
+
+            for (var row = 0; row < worldMap.length; row++) {
+                if (worldMap[row].length < worldMap[prevMapRow].length) {
+                    worldMap[row].unshift(0);
+                }
+            }
+
+            worldIndex[newIndex] = newSeed;
+            currentWorld = newIndex;
+
+            loadMap(newSeed);
+        }
+        else if (worldMap[prevMapRow][prevMapCol - 1] === 0) {
+            worldMap[prevMapRow][prevMapCol - 1] = newIndex;
+
+            for (var row = 0; row < worldMap.length; row++) {
+                if (worldMap[row].length < worldMap[prevMapRow].length) {
+                    worldMap[row].unshift(0);
+                }
+            }
+
+            worldIndex[newIndex] = newSeed;
+            currentWorld = newIndex;
+
+            loadMap(newSeed);
+        }
+        else {
+            newSeed = worldIndex[worldMap[prevMapRow][prevMapCol - 1]];
+            currentWorld = parseInt(worldIndex.getKeyByValue(newSeed));
+
+            loadMap(newSeed);
+        }
+    }
+
+    else if (dir === "right") {
+        charX = charStep * 2;
+
+        if (prevMapCol === worldMap[prevMapRow].length - 1) {
+            worldMap[prevMapRow].push(newIndex);
+
+            for (var row = 0; row < worldMap.length; row++) {
+                if (worldMap[row].length < worldMap[prevMapRow].length) {
+                    worldMap[row].push(0);
+                }
+            }
+
+            currentWorld = newIndex;
+            worldIndex[newIndex] = newSeed;
+
+            loadMap(newSeed);
+        }
+        else if (worldMap[prevMapRow][prevMapCol + 1] === 0) {
+            worldMap[prevMapRow][prevMapCol + 1] = newIndex;
+
+            currentWorld = newIndex;
+            worldIndex[newIndex] = newSeed;
+
+            loadMap(newSeed);
+        }
+        else {
+            newSeed = worldIndex[worldMap[prevMapRow][prevMapCol + 1]];
+            currentWorld = parseInt(worldIndex.getKeyByValue(newSeed));
+
+            loadMap(newSeed);
+        }
+    }
+
+    else if (dir === "up") {
+        charY = mapHeight * scalingY - charStep * 2;
+
+        if (worldMap.indexOf(worldMap[prevMapRow]) === 0) {
+            var lengthBefore = prevMapCol;
+            var lengthAfter = worldMap[prevMapRow].length - (lengthBefore + 1);
+
+            worldMap.unshift([newIndex]);
+
+            for (var i = 0; i < lengthBefore; i++) {
+                worldMap[0].unshift(0);
+            }
+
+            for (var i = 0; i < lengthAfter; i++) {
+                worldMap[0].push(0);
+            }
+
+            currentWorld = newIndex;
+            worldIndex[newIndex] = newSeed;
+
+            loadMap(newSeed);
+        }
+        else if (worldMap[prevMapRow - 1][prevMapCol] === 0) {
+            worldMap[prevMapRow - 1][prevMapCol] = newIndex;
+
+            currentWorld = newIndex;
+            worldIndex[newIndex] = newSeed;
+
+            loadMap(newSeed);
+        }
+        else {
+            newSeed = worldIndex[worldMap[prevMapRow - 1][prevMapCol]];
+            currentWorld = parseInt(worldIndex.getKeyByValue(newSeed));
+
+            loadMap(newSeed);
+        }
+    }
+
+    else if (dir === "down") {
+        charY = charStep * 2;
+
+        if (worldMap.indexOf(worldMap[prevMapRow]) === worldMap.length - 1) {
+            worldMap.push([newIndex]);
+
+            currentWorld = newIndex;
+            worldIndex[newIndex] = newSeed;
+
+            loadMap(newSeed);
+        }
+        else if (worldMap[prevMapRow + 1][prevMapCol] === 0) {
+            worldMap[prevMapRow + 1][prevMapCol] = newIndex;
+
+            currentWorld = newIndex;
+            worldIndex[newIndex] = newSeed;
+
+            loadMap(newSeed);
+        }
+        else {
+            newSeed = worldIndex[worldMap[prevMapRow + 1][prevMapCol]];
+            currentWorld = parseInt(worldIndex.getKeyByValue(newSeed));
+
+            loadMap(newSeed);
+        }
+    }
+}
+
+var loadMap = function (seedingValue) {
+    map = [];
+    regionMap = [];
+
+    noise.seed(seedingValue);
 
     var regions = (mapWidth / regionSizeX) * (mapHeight / regionSizeY);
 
@@ -166,8 +339,6 @@ var drawRegion = function (region, indexX, indexY) {
 
     for (var x = 0; x < region.length; x++) {
         for (var y = 0; y < region[x].length; y++) {
-            //map_ctx.fillStyle = float2color(region[x][y]);
-
             var tileValue = Math.floor(region[x][y] * 100) / 100;
 
             if (tileValue < 0.11) {
@@ -237,6 +408,19 @@ var updateMap = function () {
 }
 
 var drawChar = function (axis, amount) {
+    if (charX < charStep + charWidth) {
+        loadWorld("left");
+    }
+    else if (charY < charStep + charHeight) {
+        loadWorld("up");
+    }
+    else if (charX > mapWidth * scalingX - (charStep + charWidth)) {
+        loadWorld("right");
+    }
+    else if (charY > mapHeight * scalingY - (charStep + charHeight)) {
+        loadWorld("down");
+    }
+
     char_ctx.clearRect(charX - (charWidth + charStep), charY - (charHeight + charStep), charX + (charWidth + charStep), charY + (charHeight + charStep));
 
     var regionX = Math.floor(charX / charStep / regionSizeX);
@@ -249,19 +433,19 @@ var drawChar = function (axis, amount) {
 
     if (tileValue >= 0.66 && typeof axis !== "undefined") {
         window["char" + axis.toUpperCase()] -= amount;
-        console.log(["char" + axis.toUpperCase(), amount]);
     }
+
     else {
-        if (charX - (window.innerWidth / 2 + scrollOffsets()[0]) >= charStep && scrollOffsets()[0] < (mapWidth * scalingX) - window.innerWidth) {
+        while (charX - (window.innerWidth / 2 + scrollOffsets()[0]) >= charStep && scrollOffsets()[0] < (mapWidth * scalingX) - window.innerWidth) {
             window.scrollBy(charStep, 0);
         }
-        else if (charX - (window.innerWidth / 2 + scrollOffsets()[0]) <= -charStep && scrollOffsets()[0] !== 0) {
+        while (charX - (window.innerWidth / 2 + scrollOffsets()[0]) <= -charStep && scrollOffsets()[0] !== 0) {
             window.scrollBy(-charStep, 0);
         }
-        else if (charY - (window.innerHeight / 2 + scrollOffsets()[1]) >= charStep && scrollOffsets()[1] < (mapHeight * scalingY) - window.innerHeight) {
+        while (charY - (window.innerHeight / 2 + scrollOffsets()[1]) >= charStep && scrollOffsets()[1] < (mapHeight * scalingY) - window.innerHeight) {
             window.scrollBy(0, charStep);
         }
-        else if (charY - (window.innerHeight / 2 + scrollOffsets()[1]) <= -charStep && scrollOffsets()[1] !== 0) {
+        while (charY - (window.innerHeight / 2 + scrollOffsets()[1]) <= -charStep && scrollOffsets()[1] !== 0) {
             window.scrollBy(0, -charStep);
         }
     }
@@ -269,14 +453,6 @@ var drawChar = function (axis, amount) {
     char_ctx.fillStyle = "black";
     char_ctx.fillRect(charX - charWidth, charY - charHeight, charWidth, charHeight);
 }
-
-/*
-var update = function () {
-    drawChar();
-
-    window.requestAnimationFrame(update);
-}
-*/
 
 var keyPressed = function (e) {
     var key = e.keyCode;
@@ -317,7 +493,4 @@ var eventListeners = function () {
     document.addEventListener("keydown", keyPressed, event);
 }
 
-fillMap();
-eventListeners();
-drawChar();
-//update();
+init();
