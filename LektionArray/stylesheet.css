@@ -10,3 +10,7 @@ canvas {
     background-color: black;
     overflow: scroll;
 }
+
+canvas:not(#map) {
+    background-color: transparent;
+}
